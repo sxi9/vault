@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LOOT · Coffee cup</title>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.184.0/build/three.module.js",
+    "three/addons/controls/OrbitControls.js": "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js",
+    "three/addons/exporters/OBJExporter.js": "https://unpkg.com/three@0.184.0/examples/jsm/exporters/OBJExporter.js",
+    "three/addons/exporters/GLTFExporter.js": "https://unpkg.com/three@0.184.0/examples/jsm/exporters/GLTFExporter.js"
+  },
+  "integrity": {
+    "https://unpkg.com/three@0.184.0/build/three.module.js": "sha384-8FCZ1eVO6it4+pbec2aDtnTrwjWXZLJRC+MAGCIPDgsYnUrl/E0A2YlF8ioMKI/J",
+    "https://unpkg.com/three@0.184.0/build/three.core.js": "sha384-dw2ooPewaEIrAgl6oFDBmmBWCE9oW9LxRGcfwZ0hLvEprzo202wXl7vCYHRlSnOT",
+    "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js": "sha384-4rziNxOBZKQ69i+w+f89KJ55TCYquwchVbByQwmaOeIOXdOU2PLDn3kOfXHwIJC9",
+    "https://unpkg.com/three@0.184.0/examples/jsm/exporters/OBJExporter.js": "sha384-nbwtoZENJD3Vq+ACK0CuGQdPMuDWHkamC2KJD70EV5nfg6jQjfppKOea07YJN+N3",
+    "https://unpkg.com/three@0.184.0/examples/jsm/exporters/GLTFExporter.js": "sha384-VofkvpG6HERhFCYbsUOHeNXBCqID2nfqkQqnVzE1jc/oPcz+qJ13ADdXH08hE+cQ"
+  }
+}
+</script>
+<style>
+html,body{margin:0;height:100%;background:#16161b}
+three-d-stage{display:block;width:100vw;height:100vh}
+three-d-stage:not(:defined){visibility:hidden}
+</style>
+</head>
+<body>
+<three-d-stage name="loot-coffee-cup" background="#16161b" autorotate></three-d-stage>
+<script src="three-d-stage.js"></script>
+<script type="module">
+const stage = document.querySelector('three-d-stage');
+const bg = new URLSearchParams(location.search).get('bg');
+if (bg && /^[0-9a-f]{6}$/i.test(bg)) { stage.setAttribute('background', '#' + bg); document.body.style.background = '#' + bg; }
+const { THREE } = await stage.ready;
+
+const mat = (name, color, roughness, metalness) => { const m = new THREE.MeshStandardMaterial({ color, roughness, metalness }); m.name = name; return m; };
+const ceramic = mat('ceramic', 0xf1efe6, 0.32, 0.02);
+const lime = mat('lime-glaze', 0xc9f33f, 0.28, 0.02);
+const coffee = mat('coffee', 0x2b1a12, 0.12, 0.05);
+const crema = mat('crema', 0xb98a5a, 0.5, 0.0);
+const steel = mat('steel', 0xd3d6da, 0.3, 0.38);
+const add = (parent, name, geo, m, x = 0, y = 0, z = 0) => { const mesh = new THREE.Mesh(geo, m); mesh.name = name; mesh.position.set(x, y, z); parent.add(mesh); return mesh; };
+const lathe = pts => new THREE.LatheGeometry(pts.map(([r, y]) => new THREE.Vector2(r, y)), 64);
+
+const model = new THREE.Group(); model.name = 'coffee-cup';
+
+// saucer: 150 mm wide, raised rim, shallow well
+add(model, 'saucer', lathe([[0, 0], [0.028, 0], [0.03, 0.004], [0.042, 0.004], [0.062, 0.009], [0.075, 0.016], [0.073, 0.018], [0.06, 0.012], [0.044, 0.0075], [0.032, 0.0075], [0.03, 0.006], [0, 0.006]]), ceramic);
+
+// cup body: outer wall up, over the rim, inner wall down to the floor
+const cupBase = 0.0075;
+const cup = new THREE.Group(); cup.name = 'cup'; cup.position.y = cupBase; model.add(cup);
+add(cup, 'cup-body', lathe([[0, 0], [0.027, 0], [0.03, 0.002], [0.031, 0.012], [0.035, 0.04], [0.04, 0.068], [0.042, 0.082], [0.0405, 0.084], [0.038, 0.082], [0.036, 0.066], [0.0315, 0.04], [0.028, 0.014], [0.026, 0.008], [0, 0.008]]), ceramic);
+// lime glaze band around the lower third
+add(cup, 'glaze-band', new THREE.CylinderGeometry(0.0352, 0.0322, 0.018, 64, 1, true), lime, 0, 0.031, 0);
+// coffee + crema ring
+add(cup, 'coffee', new THREE.CylinderGeometry(0.0366, 0.0366, 0.002, 64), coffee, 0, 0.069, 0);
+add(cup, 'crema', new THREE.TorusGeometry(0.0335, 0.0022, 12, 64), crema, 0, 0.0695, 0).rotation.x = Math.PI / 2;
+// handle: open torus standing on the side, trimmed so the ends meet the wall
+const handle = add(cup, 'handle', new THREE.TorusGeometry(0.021, 0.0055, 20, 48, Math.PI * 1.25), ceramic, 0.047, 0.046, 0);
+handle.rotation.z = -Math.PI * 0.62;
+add(cup, 'handle-foot-top', new THREE.SphereGeometry(0.0055, 20, 16), ceramic, 0.039, 0.067, 0);
+add(cup, 'handle-foot-bottom', new THREE.SphereGeometry(0.0055, 20, 16), ceramic, 0.034, 0.025, 0);
+
+// teaspoon resting on the saucer
+const spoon = new THREE.Group(); spoon.name = 'spoon'; spoon.position.set(0.046, 0.0105, 0.046); spoon.rotation.y = -Math.PI / 4; spoon.rotation.z = 0.06; model.add(spoon);
+add(spoon, 'spoon-handle', new THREE.BoxGeometry(0.062, 0.0022, 0.007), steel, 0.02, 0, 0);
+const bowl = add(spoon, 'spoon-bowl', new THREE.SphereGeometry(0.009, 32, 20, 0, Math.PI * 2, 0, Math.PI / 2), steel, -0.016, 0, 0);
+bowl.scale.set(1, 0.38, 1.35); bowl.rotation.x = Math.PI;
+bowl.position.y = 0.0034;
+
+model.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+stage.setObject(model);
+</script>
+</body>
+</html>

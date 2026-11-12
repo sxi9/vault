@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=JetBrains+Mono:wght@400;600&family=Unbounded:wght@500;700;800&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="./image-slot.js"></script>
+<style>
+html,body{margin:0;background:var(--bg,#0e0e11)}
+*{box-sizing:border-box}
+body{color:var(--ink,#f1f0ea);font-family:'DM Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--limeInk,oklch(0.89 0.19 125));text-decoration:none}
+a:hover{color:#ffffff;text-decoration:underline}
+button,input,select,textarea{font:inherit;color:inherit}
+input::placeholder{color:#5f5e6a}
+@keyframes lootEq{0%,100%{transform:scaleY(.25)}50%{transform:scaleY(1)}}
+@media print{body *{visibility:hidden}#loot-sheet,#loot-sheet *{visibility:visible}#loot-sheet{position:absolute;left:0;top:0;width:100%;box-shadow:none;padding:0;border-radius:0}@page{margin:10mm}}
+</style>
+</helmet>
+<div style="min-height:100vh;background:var(--bg,#0e0e11);color:var(--ink,#f1f0ea);position:relative;overflow-x:hidden">
+
+  <div style="position:absolute;left:-30%;right:-30%;top:90px;height:420px;pointer-events:none;transform:perspective(700px) rotateX(62deg);transform-origin:50% 0%;background-image:linear-gradient(var(--grid,rgba(255,255,255,.07)) 1px,transparent 1px),linear-gradient(90deg,var(--grid,rgba(255,255,255,.07)) 1px,transparent 1px);background-size:56px 56px;-webkit-mask-image:linear-gradient(to bottom,transparent 0%,#000 35%,transparent 95%);mask-image:linear-gradient(to bottom,transparent 0%,#000 35%,transparent 95%)"></div>
+
+  <header style="position:sticky;top:0;z-index:30;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;padding:14px clamp(16px,4vw,48px);background:var(--bgA,rgba(14,14,17,.84));backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line,#2a2a32)">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="width:14px;height:14px;background:oklch(0.89 0.19 125);border-radius:3px;transform:rotate(45deg)"></div>
+      <span style="font-family:Unbounded,sans-serif;font-weight:800;font-size:20px;letter-spacing:-0.02em">LOOT</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink3,#9b9aa5)">/kai</span>
+    </div>
+    <sc-if value="{{ isWide }}" hint-placeholder-val="{{ true }}"><nav style="display:flex;flex-wrap:wrap;gap:4px;padding:4px;background:var(--panel,#16161b);border:1px solid var(--line,#2a2a32);border-radius:999px">
+      <sc-for list="{{ nav }}" as="n" hint-placeholder-count="5">
+        <button onClick="{{ n.on }}" style="height:36px;padding:0 16px;border-radius:999px;border:none;background:{{ n.bg }};color:{{ n.fg }};font-weight:600;font-size:14px;cursor:pointer;white-space:nowrap">{{ n.l }}</button>
+      </sc-for>
+    </nav></sc-if>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="display:flex;align-items:center;gap:10px;padding:0 14px;height:40px;border:1px solid var(--line,#2a2a32);border-radius:999px">
+        <span style="font-family:'JetBrains Mono',monospace;font-weight:600;font-size:12px">LV {{ level }}</span>
+        <div style="width:64px;height:6px;background:var(--line2,#24242b);border-radius:999px;overflow:hidden"><div style="height:100%;width:{{ xpPct }};background:oklch(0.89 0.19 125);transition:width .6s cubic-bezier(.2,.8,.2,1)"></div></div>
+      </div>
+      <sc-if value="{{ isWide }}" hint-placeholder-val="{{ true }}"><button onClick="{{ toggleTheme }}" style="height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line,#2a2a32);background:transparent;color:var(--ink,#f1f0ea);font-weight:600;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px" style-hover="border-color:var(--ink,#f1f0ea)"><span style="width:14px;height:14px;border-radius:50%;border:2px solid var(--ink,#f1f0ea);background:linear-gradient(90deg,var(--ink,#f1f0ea) 50%,transparent 50%)"></span>{{ themeLabel }}</button>
+      <button onClick="{{ toggleMute }}" style="height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line,#2a2a32);background:transparent;color:var(--ink,#f1f0ea);font-weight:600;font-size:13px;cursor:pointer" style-hover="border-color:var(--ink,#f1f0ea)">{{ soundLabel }}</button></sc-if>
+      <button onClick="{{ openAdd }}" style="height:40px;padding:0 18px;border-radius:999px;border:none;background:oklch(0.89 0.19 125);color:#0e0e11;font-weight:700;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:8px" style-hover="background:#e4ff8a">
+        <span style="font-size:18px;line-height:1">+</span>Add loot
+      </button>
+    </div>
+  </header>
+
+  <sc-if value="{{ isVault }}" hint-placeholder-val="{{ true }}">
+  <main data-screen-label="Vault" style="position:relative;z-index:1;max-width:1320px;margin:0 auto;padding:clamp(20px,4vw,48px) clamp(16px,4vw,48px) 120px;display:flex;flex-direction:column;gap:64px">
+
+    <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:20px;align-items:stretch">
+      <div style="background:var(--panel,#16161b);border:1px solid var(--line,#2a2a32);border-radius:28px;padding:clamp(20px,3vw,32px);display:flex;flex-direction:column;gap:26px">
+        <div style="display:flex;gap:22px;align-items:center;flex-wrap:wrap">
+          <div style="width:104px;height:104px;flex:none;position:relative">
+            <image-slot id="loot-owner-avatar" shape="circle" placeholder="Your photo" style="width:104px;height:104px"></image-slot>
+            <div style="position:absolute;right:-8px;bottom:-4px;background:oklch(0.89 0.19 125);color:#0e0e11;font-family:'JetBrains Mono',monospace;font-weight:600;font-size:11px;padding:4px 9px;border-radius:999px;border:3px solid var(--panel,#16161b);pointer-events:none">LV {{ level }}</div>
+          </div>
+          <div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:8px">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">PLAYER 01 · {{ rankTitleUpper }}</div>
+            <h1 style="margin:0;font-family:Unbounded,sans-serif;font-weight:800;font-size:clamp(32px,4.4vw,48px);letter-spacing:-0.035em;line-height:1">Kai Moreno</h1>
+            <p style="margin:0;color:var(--ink2,#b9b8c2);font-size:15px;line-height:1.5;text-wrap:pretty">Rides far, shoots film, feeds the park dogs, tags everything. If you found something of mine — thank you, you're a legend.</p>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink3,#9b9aa5)">
+            <span>{{ rankTitle }} → LV {{ nextLevel }}</span><span style="color:var(--ink,#f1f0ea)">{{ xpText }}</span>
+          </div>
+          <div style="height:12px;background:var(--bg,#0e0e11);border:1px solid var(--line,#2a2a32);border-radius:999px;overflow:hidden;padding:2px">
+            <div style="height:100%;width:{{ xpPct }};background:oklch(0.89 0.19 125);border-radius:999px;transition:width .6s cubic-bezier(.2,.8,.2,1)"></div>
+          </div>
+          <div style="font-size:13px;color:var(--ink3,#9b9aa5)">Next quest: <span style="color:var(--ink,#f1f0ea)">{{ nextQuest }}</span></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px">
+          <sc-for list="{{ heroStats }}" as="st" hint-placeholder-count="4">
+            <div style="background:var(--panel2,#1d1d23);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:4px">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink4,#8d8c97)">{{ st.l }}</span>
+              <span style="font-family:Unbounded,sans-serif;font-weight:700;font-size:22px;letter-spacing:-0.02em">{{ st.v }}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">LINKS · SHOWN ON EVERY TAG PAGE</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <sc-for list="{{ links }}" as="l" hint-placeholder-count="4">
+              <a href="{{ l.href }}" style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:999px;background:var(--panel2,#1d1d23);border:1px solid var(--line,#2a2a32);color:var(--ink,#f1f0ea);text-decoration:none;font-size:14px" style-hover="border-color:var(--limeInk,oklch(0.89 0.19 125))">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink4,#8d8c97)">{{ l.k }}</span>
+                <span style="font-weight:600">{{ l.v }}</span>
+              </a>
+            </sc-for>
+            <button style="padding:9px 14px;border-radius:999px;background:transparent;border:1px dashed var(--line3,#34343d);color:var(--ink3,#9b9aa5);font-size:14px;cursor:pointer" style-hover="color:var(--ink,#f1f0ea)">+ Add link</button>
+          </div>
+        </div>
+        <sc-if value="{{ isNarrow }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button onClick="{{ toggleTheme }}" style="height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line3,#34343d);background:transparent;color:var(--ink,#f1f0ea);font-weight:600;cursor:pointer;font-size:13px">{{ themeLabel }}</button>
+            <button onClick="{{ toggleMute }}" style="height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line3,#34343d);background:transparent;color:var(--ink,#f1f0ea);font-weight:600;cursor:pointer;font-size:13px">{{ soundLabel }}</button>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:20px">
+        <div style="background:var(--panel,#16161b);border:1px solid var(--line,#2a2a32);border-radius:28px;padding:22px;display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">SOUNDTRACK</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink5,#77768a)">plays on your tag pages</span>
+          </div>
+          <div style="display:flex;gap:16px;align-items:center">
+            <div style="width:76px;height:76px;flex:none"><image-slot id="loot-track-art" shape="rounded" radius="16" placeholder="Cover" style="width:76px;height:76px"></image-slot></div>
+            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
+              <div style="font-family:Unbounded,sans-serif;font-weight:700;font-size:19px;letter-spacing:-0.02em">Midnight Drive</div>
+              <div style="font-size:14px;color:var(--ink3,#9b9aa5)">Kai's riding playlist · track 3</div>
+            </div>
+            {{ eqBars }}
+            <button onClick="{{ togglePlay }}" aria-label="Play or pause" style="width:56px;height:56px;flex:none;border-radius:50%;border:none;background:oklch(0.89 0.19 125);cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:#e4ff8a">
+              <sc-if value="{{ notPlaying }}" hint-placeholder-val="{{ true }}"><div style="width:0;height:0;border-top:10px solid transparent;border-bottom:10px solid transparent;border-left:16px solid #0e0e11;margin-left:5px"></div></sc-if>
+              <sc-if value="{{ playing }}" hint-placeholder-val="{{ false }}"><div style="display:flex;gap:5px"><div style="width:5px;height:18px;background:#0e0e11;border-radius:1px"></div><div style="width:5px;height:18px;background:#0e0e11;border-radius:1px"></div></div></sc-if>
+            </button>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3,#9b9aa5)">
+            <span style="width:34px">{{ tNow }}</span>
+            <div style="flex:1;height:4px;background:var(--line,#2a2a32);border-radius:999px;overflow:hidden"><div style="height:100%;width:{{ tPct }};background:var(--ink,#f1f0ea)"></div></div>
+            <span>3:42</span>
+          </div>
+        </div>
+
+        <div style="flex:1;background:var(--panel,#16161b);border:1px solid var(--line,#2a2a32);border-radius:28px;padding:22px;display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">ACHIEVEMENTS</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--limeInk,oklch(0.89 0.19 125))">{{ badgesOn }}/6 UNLOCKED</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 10px">
+            <sc-for list="{{ badges }}" as="b" hint-placeholder-count="6">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;opacity:{{ b.op }}">
+                <div style="width:58px;height:64px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:{{ b.bg }};color:{{ b.fg }};display:flex;align-items:center;justify-content:center;font-family:Unbounded,sans-serif;font-weight:800;font-size:15px">{{ b.g }}</div>
+                <div style="font-size:13px;font-weight:700;line-height:1.2">{{ b.t }}</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink4,#8d8c97);line-height:1.3">{{ b.d }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section data-screen-label="Quests" style="display:flex;flex-wrap:wrap;gap:20px">
+      <div style="flex:1 1 300px;background:var(--panel,#16161b);border:1px solid var(--line,#2a2a32);border-radius:28px;padding:24px;display:flex;flex-direction:column;gap:18px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">STREAK</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--limeInk,oklch(0.89 0.19 125))">+10 XP / DAY</span>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:10px">
+          <span style="font-family:Unbounded,sans-serif;font-weight:800;font-size:56px;letter-spacing:-0.04em;line-height:.9">{{ streak }}</span>
+          <span style="font-size:15px;color:var(--ink3,#9b9aa5)">days in a row</span>
+        </div>
+        <div style="display:flex;gap:6px">
+          <sc-for list="{{ weekDots }}" as="d" hint-placeholder-count="7">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px">
+              <div style="width:100%;height:32px;border-radius:9px;background:{{ d.bg }};border:1.5px solid {{ d.bd }}"></div>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink4,#8d8c97)">{{ d.l }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <sc-if value="{{ canCheckIn }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ checkIn }}" style="height:44px;border-radius:999px;border:none;background:oklch(0.89 0.19 125);color:#0e0e11;font-weight:700;cursor:pointer;font-size:14px" style-hover="background:#e4ff8a">Check in today · +10 XP</button>
+        </sc-if>
+        <sc-if value="{{ checkedIn }}" hint-placeholder-val="{{ false }}">
+          <div style="height:44px;display:flex;align-items:center;justify-content:center;border-radius:999px;border:1px solid var(--line,#2a2a32);font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--limeInk,oklch(0.89 0.19 125))">CHECKED IN · SEE YOU TOMORROW</div>
+        </sc-if>
+        <p style="margin:0;font-size:13px;color:var(--ink3,#9b9aa5);line-height:1.5">Open the vault daily. The Daily carry set gives you a streak shield.</p>
+      </div>
+      <div style="flex:2 1 440px;background:var(--panel,#16161b);border:1px solid var(--line,#2a2a32);border-radius:28px;padding:24px;display:flex;flex-direction:column">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">WEEKLY QUESTS · RESET MONDAY</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--limeInk,oklch(0.89 0.19 125))">{{ questsDone }}/{{ questCount }} DONE</span>
+        </div>
+        <sc-for list="{{ quests }}" as="q" hint-placeholder-count="5">
+          <div style="display:flex;align-items:center;gap:16px;padding:12px 0;border-top:1px solid var(--line2,#24242b)">
+            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;justify-content:space-between;gap:12px"><span style="font-weight:700;font-size:15px">{{ q.t }}</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3,#9b9aa5)">{{ q.nText }}</span></div>
+              <div style="height:6px;background:var(--line2,#24242b);border-radius:999px;overflow:hidden"><div style="height:100%;width:{{ q.pct }};background:oklch(0.89 0.19 125);border-radius:999px;transition:width .5s"></div></div>
+            </div>
+            <sc-if value="{{ q.claimable }}" hint-placeholder-val="{{ false }}"><button onClick="{{ q.claim }}" style="height:38px;padding:0 16px;border-radius:999px;border:none;background:oklch(0.89 0.19 125);color:#0e0e11;font-weight:700;cursor:pointer;font-size:13px;white-space:nowrap" style-hover="background:#e4ff8a">Claim +{{ q.xp }} XP</button></sc-if>
+            <sc-if value="{{ q.claimed }}" hint-placeholder-val="{{ false }}"><span style="height:38px;display:flex;align-items:center;padding:0 14px;border-radius:999px;border:1px solid var(--line,#2a2a32);font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3,#9b9aa5)">CLAIMED</span></sc-if>
+            <sc-if value="{{ q.pending }}" hint-placeholder-val="{{ true }}"><span style="font-family:'JetBrains Mono',monospace;font-weight:600;font-size:12px;color:var(--limeInk,oklch(0.89 0.19 125));white-space:nowrap">+{{ q.xp }} XP</span></sc-if>
+          </div>
+        </sc-for>
+      </div>
+      <div style="flex:1 1 300px;background:var(--panel,#16161b);border:1px solid var(--line,#2a2a32);border-radius:28px;overflow:hidden;display:flex;flex-direction:column">
+        <div style="position:relative;height:170px;background:var(--panel,#16161b)"><iframe src="{{ coffeeSrc }}" title="3D coffee cup" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;border:0;display:block"></iframe><div style="position:absolute;left:12px;top:12px;background:oklch(0.89 0.19 125);color:#0e0e11;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.1em;padding:5px 9px;border-radius:999px;pointer-events:none">3D · DRAG TO SPIN</div></div>
+        <div style="padding:20px 24px 24px;display:flex;flex-direction:column;gap:12px;flex:1">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">COFFEE WITH FINDERS</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--limeInk,oklch(0.89 0.19 125))">THE REWARD</span></div>
+          <div style="display:flex;align-items:baseline;gap:10px"><span style="font-family:Unbounded,sans-serif;font-weight:800;font-size:44px;letter-spacing:-0.04em;line-height:.9">{{ coffeeCount }}</span><span style="font-size:15px;color:var(--ink3,#9b9aa5)">coffees with people who brought something back</span></div>
+          <p style="margin:0;font-size:13px;color:var(--ink3,#9b9aa5);line-height:1.5">Latest: {{ coffeeLatest }}. Every tag page says it: bring it back and coffee’s on you, Kai — the finder picks a time.</p>
+          <a href="coffee-cup.html" target="_blank" style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;margin-top:auto">DOWNLOAD THE CUP · OBJ / GLB →</a>
+        </div>
+      </div>
+    </section>
+
+    <section data-screen-label="Collections" style="display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">COLLECTIONS · COMPLETE A SET FOR ITS BONUS</div>
+        <h2 style="margin:0;font-family:Unbounded,sans-serif;font-weight:800;font-size:clamp(28px,3.4vw,40px);letter-spacing:-0.03em;line-height:1">Sets</h2>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),1fr));gap:16px">
+        <sc-for list="{{ sets }}" as="st" hint-placeholder-count="4">
+          <button onClick="{{ st.on }}" style="text-align:left;background:var(--panel,#16161b);border:1px solid {{ st.bd }};border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:14px;cursor:pointer;color:var(--ink,#f1f0ea)" style-hover="border-color:var(--limeInk,oklch(0.89 0.19 125))">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+              <span style="font-family:Unbounded,sans-serif;font-weight:700;font-size:18px;letter-spacing:-0.02em">{{ st.name }}</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:{{ st.cc }}">{{ st.count }}</span>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              <sc-for list="{{ st.slots }}" as="sl" hint-placeholder-count="3">
+                <span style="font-size:12px;font-weight:600;padding:5px 10px;border-radius:999px;border:1px {{ sl.bs }} {{ sl.bc }};color:{{ sl.fg }}">{{ sl.l }}</span>
+              </sc-for>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:3px">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;color:var(--ink4,#8d8c97)">{{ st.bonusLabel }}</span>
+              <span style="font-size:13px;color:{{ st.bfg }}">{{ st.bonus }}</span>
+            </div>
+          </button>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="display:flex;flex-direction:column;gap:22px">
+      <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">INVENTORY · {{ itemCount }} ITEMS TAGGED</div>
+          <h2 style="margin:0;font-family:Unbounded,sans-serif;font-weight:800;font-size:clamp(28px,3.4vw,40px);letter-spacing:-0.03em;line-height:1">The vault</h2>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <sc-for list="{{ filters }}" as="fl" hint-placeholder-count="4">
+            <button onClick="{{ fl.on }}" style="height:40px;padding:0 16px;border-radius:999px;border:1px solid {{ fl.bd }};background:{{ fl.bg }};color:{{ fl.fg }};cursor:pointer;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px">{{ fl.label }}<span style="font-family:'JetBrains Mono',monospace;font-size:11px;opacity:.6">{{ fl.n }}</span></button>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:24px">
+        <sc-for list="{{ cards }}" as="item" hint-placeholder-count="6">
+          <div onMouseMove="{{ item.onMove }}" onMouseLeave="{{ item.onLeave }}" onClick="{{ item.onOpen }}" style="perspective:1000px;cursor:pointer">
+            <div style="position:relative;height:100%;transform-style:preserve-3d;transform:{{ item.transform }};transition:{{ item.transition }};box-shadow:{{ item.shadow }};background:var(--panel,#16161b);border:1px solid var(--line,#2a2a32);border-radius:22px;padding:12px;display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 4px 0">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;color:var(--ink3,#9b9aa5)">{{ item.code }}</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:{{ item.rc }};border:1px solid {{ item.rc }};padding:3px 9px;border-radius:999px">{{ item.rarityLabel }}</span>
+              </div>
+              <div style="position:relative;aspect-ratio:4/3;border-radius:14px;overflow:hidden;background:var(--panel2,#1d1d23);transform:translateZ(30px);pointer-events:none">
+                <image-slot id="{{ item.frontSlot }}" shape="rect" placeholder="{{ item.photoHint }}"></image-slot>
+                <sc-if value="{{ item.lost }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;left:10px;top:10px;background:oklch(0.64 0.21 25);color:#fff;font-family:'JetBrains Mono',monospace;font-weight:600;font-size:10px;letter-spacing:.1em;padding:5px 9px;border-radius:999px">REPORTED LOST</div></sc-if>
+                <sc-if value="{{ item.scanned }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;right:10px;top:10px;background:rgba(14,14,17,.82);color:var(--limeInk,oklch(0.89 0.19 125));font-family:'JetBrains Mono',monospace;font-weight:600;font-size:10px;letter-spacing:.1em;padding:5px 9px;border-radius:999px">3D</div></sc-if>
+                <sc-if value="{{ item.isLent }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;left:10px;bottom:10px;background:var(--ink,#f1f0ea);color:var(--bg,#0e0e11);font-family:'JetBrains Mono',monospace;font-weight:600;font-size:10px;letter-spacing:.1em;padding:5px 9px;border-radius:999px">{{ item.lentLabel }}</div></sc-if>
+              </div>
+              <div style="padding:0 4px;display:flex;flex-direction:column;gap:3px;transform:translateZ(18px)">
+                <div style="font-family:Unbounded,sans-serif;font-weight:700;font-size:21px;letter-spacing:-0.025em;line-height:1.1">{{ item.nickname }}</div>
+                <div style="font-size:13px;color:var(--ink3,#9b9aa5)">{{ item.name }}</div>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">
+                <sc-for list="{{ item.top }}" as="s" hint-placeholder-count="2">
+                  <div style="background:var(--panel2,#1d1d23);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:3px;min-width:0">
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink4,#8d8c97);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.l }}</span>
+                    <span style="font-weight:700;font-size:15px">{{ s.v }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:0 4px 2px;margin-top:auto">
+                <sc-if value="{{ showQr }}" hint-placeholder-val="{{ false }}">
+                  <div style="width:42px;height:42px;flex:none;background:#ffffff;border-radius:8px;padding:5px"><div role="img" aria-label="QR tag" style="width:100%;height:100%;background-image:url({{ item.qrSmall }});background-size:contain;background-repeat:no-repeat;background-position:center;image-rendering:pixelated"></div></div>
+                </sc-if>
+                <div style="flex:1;display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--ink3,#9b9aa5);line-height:1.3">
+                  <span>{{ item.scans }} finder scans</span>
+                  <span>Since {{ item.since }}</span>
+                </div>
+                <span style="font-family:'JetBrains Mono',monospace;font-weight:600;font-size:12px;color:var(--limeInk,oklch(0.89 0.19 125))">+{{ item.xp }} XP</span>
+              </div>
+              <div style="position:absolute;inset:0;border-radius:22px;pointer-events:none;background:{{ item.shine }};opacity:{{ item.shineOp }};transition:opacity .3s"></div>
+            </div>
+          </div>
+        </sc-for>
+
+        <button onClick="{{ openAdd }}" style="min-height:440px;border:1.5px dashed var(--line3,#34343d);border-radius:22px;background:transparent;color:var(--ink3,#9b9aa5);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px" style-hover="border-color:var(--limeInk,oklch(0.89 0.19 125))">
+          <div style="width:68px;height:68px;border-radius:50%;background:var(--panel2,#1d1d23);display:flex;align-items:center;justify-content:center;font-size:32px;line-height:1;color:var(--limeInk,oklch(0.89 0.19 125))">+</div>
+          <div style="font-family:Unbounded,sans-serif;font-weight:700;font-size:19px;color:var(--ink,#f1f0ea)">Add new loot</div>
+          <div style="font-size:14px;max-width:210px;text-align:center;line-height:1.5">Snap front and back, scan it in 3D, mint a QR tag.</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--limeInk,oklch(0.89 0.19 125))">+150 XP</div>
+        </button>
+      </div>
+    </section>
+  </main>
+  </sc-if>
+
+  <sc-if value="{{ isActivity }}" hint-placeholder-val="{{ false }}">
+  <main data-screen-label="Activity" style="position:relative;z-index:1;max-width:1320px;margin:0 auto;padding:clamp(20px,4vw,48px) clamp(16px,4vw,48px) 120px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:clamp(24px,4vw,56px);align-items:start">
+    <div style="display:flex;flex-direction:column;gap:22px">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">ACTIVITY · {{ eventCount }} EVENTS</div>
+        <h1 style="margin:0;font-family:Unbounded,sans-serif;font-weight:800;font-size:clamp(30px,4vw,44px);letter-spacing:-0.035em;line-height:1.02">Who touched your stuff</h1>
+        <p style="margin:0;color:var(--ink2,#b9b8c2);font-size:15px;line-height:1.55;max-width:520px;text-wrap:pretty">Every scan, message, return and log — newest first. Finders only ever see what you've made public.</p>
+      </div>
+      <div style="display:flex;flex-direction:column">
+        <sc-for list="{{ feed }}" as="ev" hint-placeholder-count="6">
+          <div style="display:flex;gap:14px;align-items:flex-start;padding:16px 0;border-bottom:1px solid var(--line2,#24242b)">
+            <div style="width:44px;height:44px;flex:none;border-radius:12px;background:{{ ev.gbg }};color:{{ ev.gfg }};display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:600;font-size:11px;letter-spacing:.06em">{{ ev.g }}</div>
+            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
+              <div style="font-weight:700;font-size:15px;line-height:1.3">{{ ev.title }}</div>
+              <div style="font-size:13px;color:var(--ink3,#9b9aa5)">{{ ev.meta }}</div>
+              <sc-if value="{{ ev.hasText }}" hint-placeholder-val="{{ false }}"><div style="font-size:14px;line-height:1.45;padding:10px 12px;border-radius:12px;background:var(--panel2,#1d1d23);margin-top:4px">“{{ ev.text }}”</div></sc-if>
+            </div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink4,#8d8c97);white-space:nowrap">{{ ev.ago }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="position:sticky;top:90px;display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">LOST-ITEM MAP · BERLIN</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <sc-for list="{{ mapChips }}" as="c" hint-placeholder-count="4"><button onClick="{{ c.on }}" style="height:32px;padding:0 12px;border-radius:999px;border:1px solid {{ c.bd }};background:{{ c.bg }};color:{{ c.fg }};font-weight:600;font-size:12px;cursor:pointer">{{ c.l }}</button></sc-for>
+        </div>
+      </div>
+      <div style="position:relative;height:440px;border-radius:24px;overflow:hidden;background:var(--panel,#16161b);border:1px solid var(--line,#2a2a32);isolation:isolate;z-index:0">
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink5,#77768a)">LOADING MAP…</div>
+        <div id="loot-map" style="position:absolute;inset:0"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <sc-for list="{{ pins }}" as="pn" hint-placeholder-count="3">
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:14px;background:var(--panel,#16161b);border:1px solid var(--line,#2a2a32)">
+            <span style="width:10px;height:10px;border-radius:50%;background:{{ pn.c }};flex:none"></span>
+            <span style="font-weight:700;font-size:14px;white-space:nowrap">{{ pn.nick }}</span>
+            <span style="flex:1;font-size:13px;color:var(--ink3,#9b9aa5);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ pn.place }}</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink4,#8d8c97);white-space:nowrap">{{ pn.ago }}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="font-size:13px;color:var(--ink3,#9b9aa5);line-height:1.5">Pins come from finders who tap “Share where I found it”. Items in lost mode show in red.</div>
+    </div>
+  </main>
+  </sc-if>
+
+  <sc-if value="{{ isWall }}" hint-placeholder-val="{{ false }}">
+  <main data-screen-label="Trophy wall" style="position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:clamp(20px,4vw,48px) clamp(16px,4vw,48px) 120px;display:flex;flex-direction:column;gap:24px">
+    <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--limeInk,oklch(0.89 0.19 125))">PUBLIC PAGE · ANYONE WITH THE LINK</div>
+        <h1 style="margin:0;font-family:Unbounded,sans-serif;font-weight:800;font-size:clamp(30px,4vw,44px);letter-spacing:-0.035em;line-height:1.02">Your trophy wall</h1>
+        <p style="margin:0;color:var(--ink2,#b9b8c2);font-size:15px;line-height:1.55;max-width:520px;text-wrap:pretty">What friends and finders see at your public link. Private vault, lending and values never show here.</p>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:13px;padding:0 16px;height:44px;display:flex;align-items:center;border-radius:999px;background:var(--panel,#16161b);border:1px solid var(--line,#2a2a32)">loot.link/kai</span>
+        <button onClick="{{ copyPublic }}" style="height:44px;padding:0 18px;border-radius:999px;border:none;background:oklch(0.89 0.19 125);color:#0e0e11;font-weight:700;cursor:pointer;font-size:14px" style-hover="background:#e4ff8a">Copy link</button>
+      </div>
+    </div>
+    <div style="background:var(--panel,#16161b);border:1px solid var(--line,#2a2a32);border-radius:28px;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line,#2a2a32);background:var(--panel2,#1d1d23)">
+        <span style="width:10px;height:10px;border-radius:50%;background:var(--line3,#34343d)"></span><span style="width:10px;height:10px;border-radius:50%;background:var(--line3,#34343d)"></span><span style="width:10px;height:10px;border-radius:50%;background:var(--line3,#34343d)"></span>
+        <span style="flex:1;margin-left:8px;height:28px;border-radius:8px;background:var(--bg,#0e0e11);display:flex;align-items:center;padding:0 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3,#9b9aa5)">loot.link/kai</span>
+      </div>
+      <div style="padding:clamp(20px,3vw,36px);display:flex;flex-direction:column;gap:32px">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:22px">
+          <div style="width:88px;height:88px;flex:none"><image-slot id="loot-owner-avatar" shape="circle" placeholder="Kai" style="width:88px;height:88px"></image-slot></div>
+          <div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:6px">
+            <h2 style="margin:0;font-family:Unbounded,sans-serif;font-weight:800;font-size:clamp(26px,3.4vw,34px);letter-spacing:-0.03em;line-height:1">Kai Moreno</h2>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;color:var(--ink3,#9b9aa5)">LV {{ level }} {{ rankTitleUpper }} · {{ itemCount }} ITEMS · {{ totalScans }} FINDER SCANS</div>
+            <p style="margin:0;color:var(--ink2,#b9b8c2);font-size:14px;line-height:1.5">Rides far, shoots film, feeds the park dogs, tags everything.</p>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <sc-for list="{{ badgesEarned }}" as="b" hint-placeholder-count="4">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:60px">
+                <div style="width:40px;height:44px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:oklch(0.89 0.19 125);color:#0e0e11;display:flex;align-items:center;justify-content:center;font-family:Unbounded,sans-serif;font-weight:800;font-size:11px">{{ b.g }}</div>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink4,#8d8c97);text-align:center;line-height:1.2">{{ b.t }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,190px),1fr));gap:14px">
+          <sc-for list="{{ wallItems }}" as="w" hint-placeholder-count="6">
+            <div style="background:var(--panel2,#1d1d23);border-radius:18px;padding:10px;display:flex;flex-direction:column;gap:10px">
+              <div style="position:relative;aspect-ratio:1/1;border-radius:12px;overflow:hidden;background:var(--line2,#24242b)">
+                <image-slot id="{{ w.frontSlot }}" shape="rect" placeholder="{{ w.photoHint }}"></image-slot>
+                <sc-if value="{{ w.scanned }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;right:8px;top:8px;background:rgba(14,14,17,.82);color:var(--limeInk,oklch(0.89 0.19 125));font-family:'JetBrains Mono',monospace;font-weight:600;font-size:10px;letter-spacing:.1em;padding:4px 8px;border-radius:999px;pointer-events:none">3D MODEL</div></sc-if>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:2px;padding:0 4px">
+                <span style="font-family:Unbounded,sans-serif;font-weight:700;font-size:17px;letter-spacing:-0.02em;line-height:1.1">{{ w.nickname }}</span>
+                <span style="font-size:12px;color:var(--ink3,#9b9aa5)">{{ w.name }}</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:0 4px 2px">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:{{ w.rc }};border:1px solid {{ w.rc }};padding:3px 8px;border-radius:999px">{{ w.rarityLabel }}</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink3,#9b9aa5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ w.pubLine }}</span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));background:var(--panel2,#1d1d23);border-radius:22px;overflow:hidden">
+          <div style="position:relative;min-height:240px;background:var(--panel,#16161b)"><iframe src="{{ coffeeSrc }}" title="3D coffee cup" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;border:0;display:block"></iframe><div style="position:absolute;left:12px;top:12px;background:oklch(0.89 0.19 125);color:#0e0e11;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.1em;padding:5px 9px;border-radius:999px;pointer-events:none">3D · DRAG TO SPIN</div></div>
+          <div style="padding:22px;display:flex;flex-direction:column;gap:12px;justify-content:center">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">HAVE A COFFEE WITH KAI</span>
+            <span style="font-family:Unbounded,sans-serif;font-weight:700;font-size:20px;letter-spacing:-0.02em;line-height:1.2">Found something of mine? Coffee’s on me.</span>
+            <p style="margin:0;font-size:14px;color:var(--ink2,#b9b8c2);line-height:1.5;text-wrap:pretty">Bring it back, pick a time, and we’ll sit down — {{ coffeeCount }} coffees with finders so far.</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <sc-for list="{{ coffeeOpts }}" as="co" hint-placeholder-count="3"><button onClick="{{ co.on }}" style="height:40px;padding:0 16px;border-radius:999px;border:1px solid {{ co.bd }};background:{{ co.bg }};color:{{ co.fg }};font-weight:700;font-size:14px;cursor:pointer">{{ co.l }}</button></sc-for>
+              <button onClick="{{ sendCoffee }}" style="height:40px;padding:0 18px;border-radius:999px;border:none;background:oklch(0.89 0.19 125);color:#0e0e11;font-weight:700;cursor:pointer;font-size:14px" style-hover="background:#e4ff8a">Let’s grab a coffee · {{ coffeeLabel }}</button>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between">
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <sc-for list="{{ links }}" as="l" hint-placeholder-count="4">
+              <a href="{{ l.href }}" style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:999px;background:var(--panel2,#1d1d23);border:1px solid var(--line,#2a2a32);color:var(--ink,#f1f0ea);text-decoration:none;font-size:14px" style-hover="border-color:var(--limeInk,oklch(0.89 0.19 125))"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink4,#8d8c97)">{{ l.k }}</span><span style="font-weight:600">{{ l.v }}</span></a>
+            </sc-for>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:8px 8px 8px 14px;border-radius:999px;background:var(--panel2,#1d1d23);border:1px solid var(--line,#2a2a32)">
+            <span style="display:flex;flex-direction:column;gap:1px"><span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;color:var(--ink3,#9b9aa5)">SOUNDTRACK</span><span style="font-weight:700;font-size:14px">Midnight Drive</span></span>
+            {{ eqBars }}
+            <button onClick="{{ togglePlay }}" aria-label="Play or pause" style="width:40px;height:40px;flex:none;border-radius:50%;border:none;background:oklch(0.89 0.19 125);cursor:pointer;display:flex;align-items:center;justify-content:center">
+              <sc-if value="{{ notPlaying }}" hint-placeholder-val="{{ true }}"><div style="width:0;height:0;border-top:7px solid transparent;border-bottom:7px solid transparent;border-left:11px solid #0e0e11;margin-left:3px"></div></sc-if>
+              <sc-if value="{{ playing }}" hint-placeholder-val="{{ false }}"><div style="display:flex;gap:4px"><div style="width:4px;height:13px;background:#0e0e11"></div><div style="width:4px;height:13px;background:#0e0e11"></div></div></sc-if>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  </sc-if>
+
+  <sc-if value="{{ isStickers }}" hint-placeholder-val="{{ false }}">
+  <main data-screen-label="Stickers" style="position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:clamp(20px,4vw,48px) clamp(16px,4vw,48px) 120px;display:flex;flex-direction:column;gap:28px">
+    <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">STICKER SHEET · {{ itemCount }} TAGS · 50 × 70 MM EACH</div>
+        <h1 style="margin:0;font-family:Unbounded,sans-serif;font-weight:800;font-size:clamp(30px,4vw,44px);letter-spacing:-0.035em;line-height:1.02">Print, cut, stick.</h1>
+        <p style="margin:0;color:var(--ink2,#b9b8c2);font-size:15px;line-height:1.55;max-width:520px;text-wrap:pretty">Prints at 100% on A4 or Letter sticker paper. Cut along the dashed outline, stick where a finder looks first — frame, lid, case, dashboard.</p>
+      </div>
+      <button onClick="{{ printSheet }}" style="height:46px;padding:0 22px;border-radius:999px;border:none;background:oklch(0.89 0.19 125);color:#0e0e11;font-weight:700;cursor:pointer;font-size:15px" style-hover="background:#e4ff8a">Print sheet</button>
+    </div>
+    <div id="loot-sheet" style="align-self:center;width:min(100%,210mm);background:#ffffff;color:#121214;padding:10mm;border-radius:4px;box-shadow:0 30px 80px rgba(0,0,0,.45);display:grid;grid-template-columns:repeat(auto-fill,50mm);gap:7mm;justify-content:center">
+      <sc-for list="{{ stickers }}" as="sk" hint-placeholder-count="6">
+        <div style="width:50mm;height:70mm;border:0.4mm dashed #c9c7bd;border-radius:5mm;padding:3.5mm;display:flex;flex-direction:column;gap:2mm;background:#f3f1ea">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="display:flex;align-items:center;gap:1.5mm"><span style="width:2.2mm;height:2.2mm;background:#121214;border-radius:.5mm;transform:rotate(45deg)"></span><span style="font-family:Unbounded,sans-serif;font-weight:800;font-size:8.5pt">LOOT</span></span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:6.5pt;color:#5d5c66">{{ sk.code }}</span>
+          </div>
+          <div style="background:#ffffff;border-radius:2.5mm;padding:2.5mm;aspect-ratio:1/1"><div style="width:100%;height:100%;background-image:url({{ sk.qr }});background-size:contain;background-repeat:no-repeat;background-position:center;image-rendering:pixelated"></div></div>
+          <div style="font-family:Unbounded,sans-serif;font-weight:800;font-size:9pt;line-height:1.05;letter-spacing:-0.02em">IF FOUND,<br>SCAN ME</div>
+          <div style="font-size:6.5pt;color:#5d5c66;line-height:1.3;margin-top:auto">{{ sk.stickerLine }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </main>
+  </sc-if>
+
+  <sc-if value="{{ isFinder }}" hint-placeholder-val="{{ false }}">
+  <main data-screen-label="Finder view" style="position:relative;z-index:1;max-width:1320px;margin:0 auto;padding:clamp(20px,4vw,48px) clamp(16px,4vw,48px) 120px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr));gap:clamp(32px,5vw,80px);align-items:start">
+    <div style="display:flex;flex-direction:column;gap:36px;padding-top:12px">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--limeInk,oklch(0.89 0.19 125))">FINDER VIEW · {{ f.code }}</div>
+        <h1 style="margin:0;font-family:Unbounded,sans-serif;font-weight:800;font-size:clamp(32px,4.4vw,54px);letter-spacing:-0.035em;line-height:1.02;text-wrap:balance">What a stranger sees when they scan your tag.</h1>
+        <p style="margin:0;color:var(--ink2,#b9b8c2);font-size:16px;line-height:1.55;max-width:520px;text-wrap:pretty">No app, no login. The QR opens a page that says who it belongs to, how to reach you, and only the stats you choose to share.</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">PREVIEW AN ITEM</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <sc-for list="{{ finderChips }}" as="c" hint-placeholder-count="6">
+            <button onClick="{{ c.on }}" style="height:40px;padding:0 16px;border-radius:999px;border:1px solid {{ c.bd }};background:{{ c.bg }};color:{{ c.fg }};font-weight:600;font-size:14px;cursor:pointer">{{ c.nickname }}</button>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">THE STICKER · 50 × 70 MM</div>
+        <div style="display:flex;gap:28px;align-items:center;flex-wrap:wrap">
+          <div style="width:210px;flex:none;background:#f3f1ea;color:#121214;border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:12px;transform:rotate(-4deg);box-shadow:0 24px 48px rgba(0,0,0,.5)">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div style="display:flex;align-items:center;gap:6px"><div style="width:9px;height:9px;background:#121214;border-radius:2px;transform:rotate(45deg)"></div><span style="font-family:Unbounded,sans-serif;font-weight:800;font-size:13px">LOOT</span></div>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#5d5c66">{{ f.code }}</span>
+            </div>
+            <div style="background:#ffffff;border-radius:12px;padding:10px;aspect-ratio:1/1">
+              <sc-if value="{{ qrReady }}" hint-placeholder-val="{{ false }}"><div role="img" aria-label="QR code" style="width:100%;height:100%;background-image:url({{ f.qrSticker }});background-size:contain;background-repeat:no-repeat;background-position:center;image-rendering:pixelated"></div></sc-if>
+            </div>
+            <div style="font-family:Unbounded,sans-serif;font-weight:800;font-size:17px;line-height:1.05;letter-spacing:-0.02em">IF FOUND,<br>SCAN ME</div>
+            <div style="font-size:11px;color:#5d5c66;line-height:1.35">{{ f.stickerLine }}</div>
+          </div>
+          <div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:14px">
+            <p style="margin:0;font-size:15px;color:var(--ink2,#b9b8c2);line-height:1.55;text-wrap:pretty">Weatherproof vinyl. Stick it somewhere a finder will look first — frame, lid, case, dashboard.</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button onClick="{{ goVault }}" style="height:44px;padding:0 18px;border-radius:999px;border:1px solid var(--line3,#34343d);background:transparent;color:var(--ink,#f1f0ea);font-weight:600;font-size:14px;cursor:pointer" style-hover="border-color:var(--ink,#f1f0ea)">Back to vault</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:center">
+      <div style="width:min(392px,100%);height:812px;background:#050506;border-radius:58px;padding:12px;box-shadow:0 0 0 1px #2e2e36,0 50px 90px rgba(0,0,0,.65)">
+        <div style="height:100%;border-radius:46px;background:#f3f1ea;color:#121214;overflow:hidden;display:flex;flex-direction:column">
+          <div style="height:50px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font-weight:700;font-size:14px">
+            <span>9:41</span>
+            <div style="width:108px;height:30px;background:#050506;border-radius:999px"></div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px">5G</span>
+          </div>
+          <div style="margin:0 14px 8px;flex:none;background:#e5e2d8;border-radius:12px;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#5d5c66;text-align:center">{{ f.urlShort }}</div>
+          <div style="flex:1;overflow-y:auto;padding:4px 16px 28px;display:flex;flex-direction:column;gap:16px">
+            <sc-if value="{{ f.lost }}" hint-placeholder-val="{{ false }}">
+              <div style="background:oklch(0.62 0.2 25);color:#ffffff;border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:2px">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em">REPORTED LOST</span>
+                <span style="font-weight:700;font-size:15px;line-height:1.35">{{ f.lostLine }}</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{ f.isLent }}" hint-placeholder-val="{{ false }}">
+              <div style="background:#121214;color:#f3f1ea;border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:2px">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;color:#a9a8b2">CURRENTLY WITH {{ f.lentToUpper }}</span>
+                <span style="font-weight:700;font-size:15px;line-height:1.35">Borrowed from Kai — not stolen. If {{ f.lentTo }} isn't around, message Kai.</span>
+              </div>
+            </sc-if>
+            <div style="position:relative;height:220px;flex:none;border-radius:22px;overflow:hidden;background:#e5e2d8">
+              <image-slot id="{{ f.frontSlot }}" shape="rect" placeholder="{{ f.photoHint }}"></image-slot>
+              <div style="position:absolute;left:12px;top:12px;background:#121214;color:oklch(0.89 0.19 125);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.1em;padding:5px 9px;border-radius:999px;pointer-events:none">VERIFIED OWNER TAG</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:#5d5c66">{{ f.foundLabel }}</span>
+              <span style="font-family:Unbounded,sans-serif;font-weight:800;font-size:34px;letter-spacing:-0.035em;line-height:1">{{ f.nickname }}</span>
+              <span style="font-size:14px;color:#5d5c66">{{ f.name }} · {{ f.code }}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;background:#ffffff;border:1px solid #e2dfd5;border-radius:18px;padding:10px 12px">
+              <div style="width:42px;height:42px;flex:none"><image-slot id="loot-owner-avatar" shape="circle" placeholder="Kai" style="width:42px;height:42px"></image-slot></div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:1px">
+                <span style="font-weight:700;font-size:15px">{{ f.ownerLine }}</span>
+                <span style="font-size:12px;color:#5d5c66">LV {{ level }} {{ rankTitle }} · {{ itemCount }} items tagged</span>
+              </div>
+            </div>
+            <p style="margin:0;font-size:15px;line-height:1.5;text-wrap:pretty">{{ f.note }}</p>
+            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">
+              <sc-for list="{{ f.pub }}" as="ps" hint-placeholder-count="2">
+                <div style="background:#ffffff;border:1px solid #e2dfd5;border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:2px">
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:#5d5c66">{{ ps.l }}</span>
+                  <span style="font-family:Unbounded,sans-serif;font-weight:700;font-size:16px;letter-spacing:-0.02em">{{ ps.v }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <button onClick="{{ fMessage }}" style="height:54px;border-radius:16px;border:none;background:#121214;color:oklch(0.89 0.19 125);font-weight:700;font-size:15px;cursor:pointer">Message Kai</button>
+              <button onClick="{{ fShare }}" style="height:48px;border-radius:16px;border:1.5px solid #121214;background:transparent;color:#121214;font-weight:700;font-size:14px;cursor:pointer">{{ f.shareLabel }}</button>
+            </div>
+            <div style="background:oklch(0.89 0.19 125);border-radius:18px;padding:14px 16px;display:flex;flex-direction:column;gap:4px">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em">FINDER'S REWARD</span>
+              <span style="font-family:Unbounded,sans-serif;font-weight:700;font-size:16px;line-height:1.25">Coffee's on me — or name your price.</span>
+            </div>
+            <div style="background:#121214;color:#f3f1ea;border-radius:18px;overflow:hidden;display:flex;flex-direction:column">
+              <div style="position:relative;height:170px;background:var(--panel,#16161b)"><iframe src="{{ coffeeSrc }}" title="3D coffee cup" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;border:0;display:block"></iframe><div style="position:absolute;left:12px;top:12px;background:oklch(0.89 0.19 125);color:#0e0e11;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.1em;padding:5px 9px;border-radius:999px;pointer-events:none">3D · DRAG TO SPIN</div></div>
+              <div style="padding:14px;display:flex;flex-direction:column;gap:10px">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;color:#a9a8b2">FOUND IT? COFFEE’S ON KAI</span>
+                <span style="font-family:Unbounded,sans-serif;font-weight:700;font-size:15px;line-height:1.25">Bring {{ f.nickname }} back and have a coffee with Kai. Pick a time that suits you.</span>
+                <div style="display:flex;gap:6px">
+                  <sc-for list="{{ coffeeOptsPhone }}" as="co" hint-placeholder-count="3"><button onClick="{{ co.on }}" style="flex:1;height:40px;border-radius:12px;border:1px solid {{ co.bd }};background:{{ co.bg }};color:{{ co.fg }};font-weight:700;font-size:14px;cursor:pointer">{{ co.l }}</button></sc-for>
+                </div>
+                <button onClick="{{ sendCoffee }}" style="height:48px;border-radius:14px;border:none;background:oklch(0.89 0.19 125);color:#0e0e11;font-weight:700;font-size:15px;cursor:pointer">Let’s grab a coffee · {{ coffeeLabel }}</button>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;color:#5d5c66">MORE FROM KAI</span>
+              <sc-for list="{{ links }}" as="l" hint-placeholder-count="4">
+                <a href="{{ l.href }}" style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:#ffffff;border:1px solid #e2dfd5;border-radius:14px;padding:12px 14px;color:#121214;text-decoration:none">
+                  <span style="display:flex;flex-direction:column;gap:1px"><span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:#5d5c66">{{ l.k }}</span><span style="font-weight:700;font-size:14px">{{ l.v }}</span></span>
+                  <span style="font-size:16px">→</span>
+                </a>
+              </sc-for>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;background:#121214;color:#f1f0ea;border-radius:18px;padding:10px 12px">
+              <div style="width:44px;height:44px;flex:none"><image-slot id="loot-track-art" shape="rounded" radius="10" placeholder="Art" style="width:44px;height:44px"></image-slot></div>
+              <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:1px">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;color:#9b9aa5">KAI'S SOUNDTRACK</span>
+                <span style="font-weight:700;font-size:14px">Midnight Drive</span>
+              </div>
+              {{ eqBarsPhone }}
+              <button onClick="{{ togglePlay }}" aria-label="Play or pause" style="width:40px;height:40px;flex:none;border-radius:50%;border:none;background:oklch(0.89 0.19 125);cursor:pointer;display:flex;align-items:center;justify-content:center">
+                <sc-if value="{{ notPlaying }}" hint-placeholder-val="{{ true }}"><div style="width:0;height:0;border-top:7px solid transparent;border-bottom:7px solid transparent;border-left:11px solid #0e0e11;margin-left:3px"></div></sc-if>
+                <sc-if value="{{ playing }}" hint-placeholder-val="{{ false }}"><div style="display:flex;gap:4px"><div style="width:4px;height:13px;background:#0e0e11"></div><div style="width:4px;height:13px;background:#0e0e11"></div></div></sc-if>
+              </button>
+            </div>
+            <div style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;color:#8a8994;padding-top:4px">TAG {{ f.code }} · LOOT LOST &amp; FOUND</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  </sc-if>
+
+  <sc-if value="{{ hasSel }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:50;display:flex;justify-content:flex-end">
+    <div onClick="{{ closeSel }}" style="position:absolute;inset:0;background:rgba(6,6,8,.68);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)"></div>
+    <aside data-screen-label="Item detail" style="position:relative;width:min(620px,100%);height:100%;overflow-y:auto;background:var(--deep,#121216);border-left:1px solid var(--line,#2a2a32);padding:clamp(18px,3vw,32px);display:flex;flex-direction:column;gap:24px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px">
+        <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:{{ sel.rc }};border:1px solid {{ sel.rc }};padding:3px 9px;border-radius:999px">{{ sel.rarityLabel }}</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink3,#9b9aa5)">{{ sel.code }} · {{ sel.cat }}</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--limeInk,oklch(0.89 0.19 125))">+{{ sel.xp }} XP</span>
+          </div>
+          <h2 style="margin:0;font-family:Unbounded,sans-serif;font-weight:800;font-size:clamp(32px,5vw,46px);letter-spacing:-0.035em;line-height:1">{{ sel.nickname }}</h2>
+          <div style="color:var(--ink3,#9b9aa5);font-size:15px">{{ sel.name }}</div>
+        </div>
+        <button onClick="{{ closeSel }}" aria-label="Close" style="width:44px;height:44px;flex:none;border-radius:50%;border:1px solid var(--line3,#34343d);background:transparent;cursor:pointer;font-size:22px;line-height:1;color:var(--ink,#f1f0ea)" style-hover="border-color:var(--ink,#f1f0ea)">×</button>
+      </div>
+
+      <div onPointerDown="{{ stageDown }}" onMouseEnter="{{ stageEnter }}" onMouseLeave="{{ stageLeave }}" style="position:relative;height:{{ stageH }};flex:none;border-radius:24px;background:radial-gradient(ellipse at 50% 88%,var(--stage1,#25252d) 0%,var(--stage2,#141418) 62%);border:1px solid var(--line2,#24242b);perspective:1100px;display:flex;align-items:center;justify-content:center;user-select:none;-webkit-user-select:none;touch-action:pan-y;cursor:{{ stageCursor }};overflow:hidden">
+        <div style="position:absolute;left:50%;bottom:30px;width:280px;height:26px;margin-left:-140px;border-radius:50%;background:rgba(0,0,0,.6);filter:blur(12px)"></div>
+        <sc-if value="{{ selHasModel }}" hint-placeholder-val="{{ false }}"><iframe src="{{ selModelSrc }}" title="3D model" style="position:absolute;inset:0;width:100%;height:100%;border:0;display:block;border-radius:24px"></iframe></sc-if>
+        <sc-if value="{{ selNoModel }}" hint-placeholder-val="{{ false }}">
+        <div style="position:relative;width:300px;height:250px;transform-style:preserve-3d;transform:{{ slabTransform }};transition:{{ slabTransition }}">
+          <div style="position:absolute;inset:0;transform:translateZ(8px);backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--slab,#1b1b21);border:1px solid {{ sel.rc }};border-radius:16px;padding:10px;display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:2px 4px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em">
+              <span style="color:{{ sel.rc }}">FRONT · {{ sel.nicknameUpper }}</span><span style="color:var(--ink3,#9b9aa5)">{{ sel.code }}</span>
+            </div>
+            <div style="flex:1;position:relative;border-radius:10px;overflow:hidden;background:var(--line2,#24242b)"><image-slot id="{{ sel.frontSlot }}" shape="rect" placeholder="Drop front photo"></image-slot></div>
+          </div>
+          <div style="position:absolute;inset:0;transform:rotateY(180deg) translateZ(8px);backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--slab,#1b1b21);border:1px solid {{ sel.rc }};border-radius:16px;padding:10px;display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:2px 4px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em">
+              <span style="color:{{ sel.rc }}">BACK · IF FOUND, SCAN</span>
+              <sc-if value="{{ qrReady }}" hint-placeholder-val="{{ false }}"><div style="width:26px;height:26px;background:#ffffff;border-radius:4px;padding:3px"><div style="width:100%;height:100%;background-image:url({{ sel.qrTiny }});background-size:contain;background-repeat:no-repeat;background-position:center;image-rendering:pixelated"></div></div></sc-if>
+            </div>
+            <div style="flex:1;position:relative;border-radius:10px;overflow:hidden;background:var(--line2,#24242b)"><image-slot id="{{ sel.backSlot }}" shape="rect" placeholder="Drop back photo"></image-slot></div>
+          </div>
+          <div style="position:absolute;top:10px;bottom:10px;left:142px;width:16px;background:{{ sel.edge }};transform:rotateY(90deg) translateZ(150px)"></div>
+          <div style="position:absolute;top:10px;bottom:10px;left:142px;width:16px;background:{{ sel.edge }};transform:rotateY(-90deg) translateZ(150px)"></div>
+          <div style="position:absolute;left:10px;right:10px;top:117px;height:16px;background:{{ sel.edge }};transform:rotateX(90deg) translateZ(125px)"></div>
+          <div style="position:absolute;left:10px;right:10px;top:117px;height:16px;background:{{ sel.edge }};transform:rotateX(-90deg) translateZ(125px)"></div>
+        </div>
+        </sc-if>
+        <div style="position:absolute;left:16px;bottom:14px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;color:var(--ink5,#77768a);pointer-events:none">DRAG TO ROTATE</div>
+        <sc-if value="{{ selScanning }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;right:16px;bottom:12px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;color:var(--limeInk,oklch(0.89 0.19 125));pointer-events:none">CAPTURING 360° · {{ scanPctText }}</div>
+        </sc-if>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+        <button onClick="{{ showFront }}" style="height:40px;padding:0 16px;border-radius:999px;border:1px solid var(--line3,#34343d);background:transparent;color:var(--ink,#f1f0ea);font-weight:600;font-size:14px;cursor:pointer" style-hover="border-color:var(--ink,#f1f0ea)">Front</button>
+        <button onClick="{{ showBack }}" style="height:40px;padding:0 16px;border-radius:999px;border:1px solid var(--line3,#34343d);background:transparent;color:var(--ink,#f1f0ea);font-weight:600;font-size:14px;cursor:pointer" style-hover="border-color:var(--ink,#f1f0ea)">Back</button>
+        <sc-if value="{{ selModelToggle }}" hint-placeholder-val="{{ false }}"><button onClick="{{ toggleModel }}" style="height:40px;padding:0 16px;border-radius:999px;border:1px solid var(--line3,#34343d);background:transparent;color:var(--ink,#f1f0ea);font-weight:600;font-size:14px;cursor:pointer">{{ modelToggleLabel }}</button></sc-if>
+        <button onClick="{{ toggleSpin }}" style="height:40px;padding:0 16px;border-radius:999px;border:1px solid {{ spinBd }};background:{{ spinBg }};color:{{ spinFg }};font-weight:600;font-size:14px;cursor:pointer">{{ spinLabel }}</button>
+        <div style="flex:1"></div>
+        <sc-if value="{{ selScanIdle }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ startScan }}" style="height:40px;padding:0 16px;border-radius:999px;border:none;background:oklch(0.89 0.19 125);color:#0e0e11;font-weight:700;font-size:14px;cursor:pointer" style-hover="background:#e4ff8a">Scan in 3D · +80 XP</button>
+        </sc-if>
+        <sc-if value="{{ selScanning }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:10px;height:40px;padding:0 16px;border-radius:999px;border:1px solid var(--limeInk,oklch(0.89 0.19 125));min-width:180px">
+            <div style="flex:1;height:4px;background:var(--line,#2a2a32);border-radius:999px;overflow:hidden"><div style="height:100%;width:{{ scanPctW }};background:oklch(0.89 0.19 125)"></div></div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--limeInk,oklch(0.89 0.19 125))">{{ scanPctText }}</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{ selScanned }}" hint-placeholder-val="{{ false }}">
+          <span style="display:flex;align-items:center;height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line,#2a2a32);font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--limeInk,oklch(0.89 0.19 125))">3D MODEL · 52 FRAMES</span>
+        </sc-if>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">STATS</div>
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
+          <sc-for list="{{ sel.stats }}" as="s" hint-placeholder-count="4">
+            <div style="background:var(--panel,#16161b);border:1px solid var(--line2,#24242b);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:5px;min-width:0">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink4,#8d8c97)">{{ s.l }}</span>
+              <span style="font-family:Unbounded,sans-serif;font-weight:700;font-size:20px;letter-spacing:-0.02em">{{ s.v }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="font-size:13px;color:var(--ink3,#9b9aa5)">Finders see: <span style="color:var(--ink,#f1f0ea)">{{ sel.pubText }}</span></div>
+      </div>
+
+      <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;background:var(--panel,#16161b);border:1px solid var(--line,#2a2a32);border-radius:22px;padding:18px">
+        <div style="width:156px;height:156px;flex:none;background:#ffffff;border-radius:16px;padding:12px">
+          <sc-if value="{{ qrReady }}" hint-placeholder-val="{{ false }}"><div role="img" aria-label="QR code" style="width:100%;height:100%;background-image:url({{ sel.qrBig }});background-size:contain;background-repeat:no-repeat;background-position:center;image-rendering:pixelated"></div></sc-if>
+        </div>
+        <div style="flex:1;min-width:210px;display:flex;flex-direction:column;gap:10px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">QR TAG · {{ sel.code }}</div>
+          <div style="font-family:Unbounded,sans-serif;font-weight:700;font-size:18px;line-height:1.25;letter-spacing:-0.02em">Anyone who scans this lands on {{ sel.nickname }}'s page.</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink3,#9b9aa5);word-break:break-all">{{ sel.urlShort }}</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button onClick="{{ previewFinder }}" style="height:40px;padding:0 16px;border-radius:999px;border:none;background:oklch(0.89 0.19 125);color:#0e0e11;font-weight:700;font-size:14px;cursor:pointer" style-hover="background:#e4ff8a">Preview finder page</button>
+            <button onClick="{{ copyLink }}" style="height:40px;padding:0 16px;border-radius:999px;border:1px solid var(--line3,#34343d);background:transparent;color:var(--ink,#f1f0ea);font-weight:600;font-size:14px;cursor:pointer" style-hover="border-color:var(--ink,#f1f0ea)">Copy link</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:var(--panel,#16161b);border:1px solid var(--line,#2a2a32);border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:16px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">IF-FOUND MESSAGE</div>
+        <p style="margin:0;font-size:16px;line-height:1.55;text-wrap:pretty">{{ sel.note }}</p>
+        <div style="height:1px;background:var(--line2,#24242b)"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:16px">
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <span style="font-weight:700;font-size:15px">Report as lost</span>
+            <span style="font-size:13px;color:var(--ink3,#9b9aa5);line-height:1.4">Finders see an urgent banner and your contact first.</span>
+          </div>
+          <button onClick="{{ toggleLost }}" aria-label="Toggle lost mode" style="position:relative;width:54px;height:32px;flex:none;border-radius:999px;border:none;background:{{ lostTrack }};cursor:pointer;transition:background .2s">
+            <span style="position:absolute;top:4px;left:{{ lostKnob }};width:24px;height:24px;border-radius:50%;background:#ffffff;transition:left .2s"></span>
+          </button>
+        </div>
+      </div>
+    
+      <div style="background:var(--panel,#16161b);border:1px solid var(--line,#2a2a32);border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">JOURNAL · {{ sel.journalCount }} ENTRIES</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--limeInk,oklch(0.89 0.19 125))">+25 XP PER ENTRY</span>
+        </div>
+        <div style="display:flex;gap:8px">
+          <input value="{{ journalText }}" onChange="{{ setJournalText }}" onKeyDown="{{ journalKey }}" placeholder="e.g. New brake pads · 3,500 km" style="flex:1;min-width:0;height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--line,#2a2a32);background:var(--bg,#0e0e11);font-size:14px;outline:none">
+          <button onClick="{{ addJournal }}" style="height:44px;padding:0 16px;border-radius:999px;border:none;background:oklch(0.89 0.19 125);color:#0e0e11;font-weight:700;cursor:pointer;font-size:14px;white-space:nowrap" style-hover="background:#e4ff8a">Log it</button>
+        </div>
+        <div style="display:flex;flex-direction:column">
+          <sc-for list="{{ sel.journal }}" as="j" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line2,#24242b)">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3,#9b9aa5);width:52px;flex:none">{{ j.d }}</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--panel2,#1d1d23);color:var(--ink3,#9b9aa5);flex:none">{{ j.k }}</span>
+              <span style="font-size:14px;flex:1;min-width:0">{{ j.t }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="background:var(--panel,#16161b);border:1px solid var(--line,#2a2a32);border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">LENDING</span>
+          <sc-if value="{{ sel.isLent }}" hint-placeholder-val="{{ false }}"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;color:var(--ink,#f1f0ea)">WITH {{ sel.lentToUpper }}</span></sc-if>
+        </div>
+        <sc-if value="{{ sel.isLent }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+            <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:3px">
+              <span style="font-weight:700;font-size:15px">{{ sel.nickname }} is with {{ sel.lentTo }}</span>
+              <span style="font-size:13px;color:var(--ink3,#9b9aa5)">Since {{ sel.lent.since }} · due back {{ sel.lent.due }}</span>
+            </div>
+            <button onClick="{{ markReturned }}" style="height:40px;padding:0 16px;border-radius:999px;border:none;background:oklch(0.89 0.19 125);color:#0e0e11;font-weight:700;cursor:pointer;font-size:14px;white-space:nowrap" style-hover="background:#e4ff8a">Mark returned · +40 XP</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{ sel.notLent }}" hint-placeholder-val="{{ true }}">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:8px">
+            <input value="{{ lendTo }}" onChange="{{ setLendTo }}" placeholder="Lend to…" style="height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--line,#2a2a32);background:var(--bg,#0e0e11);font-size:14px;outline:none;min-width:0">
+            <input value="{{ lendDue }}" onChange="{{ setLendDue }}" placeholder="Due back · e.g. Nov 30" style="height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--line,#2a2a32);background:var(--bg,#0e0e11);font-size:14px;outline:none;min-width:0">
+            <button onClick="{{ lendItem }}" style="height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--line3,#34343d);background:transparent;color:var(--ink,#f1f0ea);font-weight:600;cursor:pointer;font-size:14px;white-space:nowrap" style-hover="border-color:var(--ink,#f1f0ea)">Mark as lent</button>
+          </div>
+        </sc-if>
+        <div style="font-size:13px;color:var(--ink3,#9b9aa5);line-height:1.5">While lent, the tag page says who has it — so a finder doesn't think it's stolen.</div>
+      </div>
+
+      <div style="background:var(--bg,#0e0e11);border:1px solid var(--line3,#34343d);border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">PRIVATE VAULT</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;color:var(--limeInk,oklch(0.89 0.19 125));border:1px solid var(--limeInk,oklch(0.89 0.19 125));padding:4px 10px;border-radius:999px">ONLY YOU · NEVER ON THE TAG</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
+          <div style="background:var(--panel,#16161b);border:1px solid var(--line,#2a2a32);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;color:var(--ink4,#8d8c97)">{{ sel.pl1 }}</span><span style="font-family:'JetBrains Mono',monospace;font-size:13px;word-break:break-all">{{ sel.priv.serial }}</span></div>
+          <div style="background:var(--panel,#16161b);border:1px solid var(--line,#2a2a32);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;color:var(--ink4,#8d8c97)">{{ sel.pl2 }}</span><span style="font-weight:700;font-size:15px">{{ sel.priv.paid }}</span></div>
+          <div style="background:var(--panel,#16161b);border:1px solid var(--line,#2a2a32);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;color:var(--ink4,#8d8c97)">{{ sel.pl3 }}</span><span style="font-weight:700;font-size:14px">{{ sel.priv.warranty }}</span></div>
+          <div style="background:var(--panel,#16161b);border:1px solid var(--line,#2a2a32);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;color:var(--ink4,#8d8c97)">{{ sel.pl4 }}</span><span style="font-weight:700;font-size:14px">{{ sel.priv.insured }}</span></div>
+        </div>
+        <div style="height:120px;border-radius:14px;overflow:hidden;background:var(--panel,#16161b)"><image-slot id="{{ sel.receiptSlot }}" shape="rect" placeholder="Drop receipt or invoice"></image-slot></div>
+      </div>
+
+      <div style="background:var(--panel,#16161b);border:1px solid var(--line,#2a2a32);border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">SHARE CARD · 1080 × 1350</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3,#9b9aa5)">INSTAGRAM · 4:5</span>
+        </div>
+        <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start">
+          <div style="width:200px;flex:none;aspect-ratio:4/5;border-radius:16px;background:{{ sel.rcBright }};color:#0e0e11;padding:14px;display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em"><span style="font-family:Unbounded,sans-serif;font-weight:800;font-size:10px">LOOT</span><span>{{ sel.code }}</span></div>
+            <div style="flex:1;border-radius:10px;overflow:hidden;background:rgba(0,0,0,.14)"><image-slot id="{{ sel.frontSlot }}" shape="rect" placeholder="front photo"></image-slot></div>
+            <div style="font-family:Unbounded,sans-serif;font-weight:800;font-size:20px;letter-spacing:-0.03em;line-height:1">{{ sel.nickname }}</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase">{{ sel.pubLine }}</div>
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:'JetBrains Mono',monospace;font-size:8px">loot.link/kai</span><div style="width:30px;height:30px;background:#ffffff;border-radius:5px;padding:3px"><div style="width:100%;height:100%;background-image:url({{ sel.qrTiny }});background-size:contain;background-repeat:no-repeat;background-position:center;image-rendering:pixelated"></div></div></div>
+          </div>
+          <div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:12px">
+            <p style="margin:0;font-size:14px;color:var(--ink2,#b9b8c2);line-height:1.5;text-wrap:pretty">Rarity-coloured card with your photo, nickname, top stat and the tag's QR. Post it, pin it, or drop it in the group chat.</p>
+            <div style="padding:12px 14px;border-radius:12px;background:var(--panel2,#1d1d23);font-size:13px;line-height:1.5;color:var(--ink2,#b9b8c2)">{{ sel.caption }}</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button onClick="{{ downloadShare }}" style="height:40px;padding:0 16px;border-radius:999px;border:none;background:oklch(0.89 0.19 125);color:#0e0e11;font-weight:700;cursor:pointer;font-size:14px" style-hover="background:#e4ff8a">Download PNG</button>
+              <button onClick="{{ copyCaption }}" style="height:40px;padding:0 16px;border-radius:999px;border:1px solid var(--line3,#34343d);background:transparent;color:var(--ink,#f1f0ea);font-weight:600;cursor:pointer;font-size:14px" style-hover="border-color:var(--ink,#f1f0ea)">Copy caption</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ addOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:16px">
+    <div onClick="{{ closeAdd }}" style="position:absolute;inset:0;background:rgba(6,6,8,.74);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)"></div>
+    <div style="position:relative;width:min(780px,100%);max-height:calc(100vh - 32px);overflow-y:auto;background:var(--deep,#121216);border:1px solid var(--line,#2a2a32);border-radius:28px;padding:clamp(18px,3vw,32px);display:flex;flex-direction:column;gap:26px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--limeInk,oklch(0.89 0.19 125))">NEW LOOT · {{ draftCode }}</div>
+          <h2 style="margin:0;font-family:Unbounded,sans-serif;font-weight:800;font-size:clamp(26px,3.6vw,34px);letter-spacing:-0.03em;line-height:1.05">{{ addTitle }}</h2>
+        </div>
+        <button onClick="{{ closeAdd }}" aria-label="Close" style="width:44px;height:44px;flex:none;border-radius:50%;border:1px solid var(--line3,#34343d);background:transparent;cursor:pointer;font-size:22px;line-height:1;color:var(--ink,#f1f0ea)">×</button>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+        <div style="display:flex;gap:4px;padding:4px;background:var(--panel,#16161b);border:1px solid var(--line,#2a2a32);border-radius:999px">
+          <sc-for list="{{ addModes }}" as="m" hint-placeholder-count="2"><button onClick="{{ m.on }}" style="height:34px;padding:0 16px;border-radius:999px;border:none;background:{{ m.bg }};color:{{ m.fg }};font-weight:600;font-size:13px;cursor:pointer">{{ m.l }}</button></sc-for>
+        </div>
+        <sc-if value="{{ addFull }}" hint-placeholder-val="{{ false }}"><div style="display:flex;gap:8px;flex-wrap:wrap">
+        <sc-for list="{{ steps }}" as="sp" hint-placeholder-count="3">
+          <div style="display:flex;align-items:center;gap:8px;height:36px;padding:0 14px 0 6px;border-radius:999px;border:1px solid {{ sp.bd }};background:{{ sp.bg }};color:{{ sp.fg }};font-size:14px;font-weight:600">
+            <span style="width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.14);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px">{{ sp.n }}</span>{{ sp.l }}
+          </div>
+        </sc-for>
+      </div></sc-if>
+      </div>
+
+      <sc-if value="{{ addInstant }}" hint-placeholder-val="{{ true }}">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:16px">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">01 · SNAP IT</span>
+            <div style="height:260px;border-radius:18px;overflow:hidden;background:var(--panel2,#1d1d23)"><image-slot id="{{ draftFront }}" shape="rect" placeholder="Tap to take a photo, or drop one"></image-slot></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <label style="display:flex;flex-direction:column;gap:8px">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">NICKNAME</span>
+              <input value="{{ draft.nickname }}" onChange="{{ setNick }}" placeholder="Bruno" style="height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--line,#2a2a32);background:var(--bg,#0e0e11);font-size:14px;outline:none;font-size:16px;height:48px">
+            </label>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">WHAT IS IT?</span>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <sc-for list="{{ catOpts }}" as="co" hint-placeholder-count="5">
+                  <button onClick="{{ co.on }}" style="height:36px;padding:0 14px;border-radius:999px;border:1px solid {{ co.bd }};background:{{ co.bg }};color:{{ co.fg }};font-weight:600;font-size:13px;cursor:pointer">{{ co.l }}</button>
+                </sc-for>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">LOCATION · OPTIONAL</span>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button onClick="{{ useLocation }}" style="height:44px;padding:0 14px;border-radius:999px;border:1px solid var(--line3,#34343d);background:transparent;color:var(--ink,#f1f0ea);font-weight:600;cursor:pointer;font-size:14px;white-space:nowrap" style-hover="border-color:var(--ink,#f1f0ea)">Use my location</button>
+                <input value="{{ draft.place }}" onChange="{{ setPlace }}" placeholder="Place · e.g. Görlitzer Park, east gate" style="flex:1;min-width:160px;height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--line,#2a2a32);background:var(--bg,#0e0e11);font-size:14px;outline:none">
+              </div>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;color:{{ draftLocColor }}">{{ draftLocText }}</span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+          <span style="font-size:13px;color:var(--ink3,#9b9aa5);line-height:1.45;max-width:400px">Stats, 3D scan and the private vault can be added later from the item page. Street dogs get a “cared for by Kai” tag instead of “belongs to”.</span>
+          <button onClick="{{ saveInstant }}" style="height:46px;padding:0 24px;border-radius:999px;border:none;background:oklch(0.89 0.19 125);color:#0e0e11;font-weight:700;cursor:pointer;font-size:15px" style-hover="background:#e4ff8a">Add now · +150 XP</button>
+        </div>
+      </sc-if>
+      
+
+      <sc-if value="{{ step0 }}" hint-placeholder-val="{{ false }}">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:14px">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">01 · FRONT</span>
+            <div style="height:240px;border-radius:18px;overflow:hidden;background:var(--panel2,#1d1d23)"><image-slot id="{{ draftFront }}" shape="rect" placeholder="Snap or drop the front"></image-slot></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">02 · BACK</span>
+            <div style="height:240px;border-radius:18px;overflow:hidden;background:var(--panel2,#1d1d23)"><image-slot id="{{ draftBack }}" shape="rect" placeholder="Snap or drop the back"></image-slot></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">03 · 3D SCAN · OPTIONAL</span>
+            <div style="height:240px;border-radius:18px;border:1.5px dashed var(--line3,#34343d);padding:18px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px;text-align:center">
+              <sc-if value="{{ draftScanIdle }}" hint-placeholder-val="{{ true }}">
+                <div style="font-size:14px;color:var(--ink3,#9b9aa5);line-height:1.5">Walk around it slowly. We stitch the frames into a 360° model.</div>
+                <button onClick="{{ startDraftScan }}" style="height:40px;padding:0 16px;border-radius:999px;border:none;background:oklch(0.89 0.19 125);color:#0e0e11;font-weight:700;font-size:14px;cursor:pointer">Start 3D scan · +80 XP</button>
+              </sc-if>
+              <sc-if value="{{ draftScanning }}" hint-placeholder-val="{{ false }}">
+                <div style="font-family:Unbounded,sans-serif;font-weight:800;font-size:36px;color:var(--limeInk,oklch(0.89 0.19 125))">{{ scanPctText }}</div>
+                <div style="width:100%;height:4px;background:var(--line,#2a2a32);border-radius:999px;overflow:hidden"><div style="height:100%;width:{{ scanPctW }};background:oklch(0.89 0.19 125)"></div></div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3,#9b9aa5)">CAPTURING FRAMES…</div>
+              </sc-if>
+              <sc-if value="{{ draftScanned }}" hint-placeholder-val="{{ false }}">
+                <div style="font-family:Unbounded,sans-serif;font-weight:800;font-size:24px">Captured</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--limeInk,oklch(0.89 0.19 125))">52 FRAMES · 360° MODEL</div>
+              </sc-if>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:8px">
+          <button onClick="{{ toStep1 }}" style="height:46px;padding:0 22px;border-radius:999px;border:none;background:var(--ink,#f1f0ea);color:var(--bg,#0e0e11);font-weight:700;font-size:15px;cursor:pointer">Next: details</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ step1 }}" hint-placeholder-val="{{ false }}">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:16px">
+          <label style="display:flex;flex-direction:column;gap:8px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">NICKNAME</span>
+            <input value="{{ draft.nickname }}" onChange="{{ setNick }}" placeholder="Thunderbolt" style="height:50px;padding:0 16px;border-radius:14px;border:1px solid var(--line,#2a2a32);background:var(--panel,#16161b);font-size:16px;outline:none">
+          </label>
+          <label style="display:flex;flex-direction:column;gap:8px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">WHAT IS IT?</span>
+            <input value="{{ draft.name }}" onChange="{{ setName }}" placeholder="Electric scooter" style="height:50px;padding:0 16px;border-radius:14px;border:1px solid var(--line,#2a2a32);background:var(--panel,#16161b);font-size:16px;outline:none">
+          </label>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">CATEGORY</span>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <sc-for list="{{ catOpts }}" as="co" hint-placeholder-count="3">
+              <button onClick="{{ co.on }}" style="height:40px;padding:0 18px;border-radius:999px;border:1px solid {{ co.bd }};background:{{ co.bg }};color:{{ co.fg }};font-weight:600;font-size:14px;cursor:pointer">{{ co.l }}</button>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">RARITY · HOW MUCH IT MEANS TO YOU</span>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <sc-for list="{{ rarOpts }}" as="ro" hint-placeholder-count="4">
+              <button onClick="{{ ro.on }}" style="height:40px;padding:0 18px;border-radius:999px;border:1px solid {{ ro.c }};background:{{ ro.bg }};color:{{ ro.fg }};font-weight:600;font-size:14px;cursor:pointer">{{ ro.l }}</button>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:16px">
+          <label style="display:flex;flex-direction:column;gap:8px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">STAT TO SHOW FINDERS</span>
+            <input value="{{ draft.statL }}" onChange="{{ setStatL }}" placeholder="Km ridden" style="height:50px;padding:0 16px;border-radius:14px;border:1px solid var(--line,#2a2a32);background:var(--panel,#16161b);font-size:16px;outline:none">
+          </label>
+          <label style="display:flex;flex-direction:column;gap:8px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--ink3,#9b9aa5)">VALUE</span>
+            <input value="{{ draft.statV }}" onChange="{{ setStatV }}" placeholder="1,204 km" style="height:50px;padding:0 16px;border-radius:14px;border:1px solid var(--line,#2a2a32);background:var(--panel,#16161b);font-size:16px;outline:none">
+          </label>
+        </div>
+        <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
+          <button onClick="{{ toStep0 }}" style="height:46px;padding:0 20px;border-radius:999px;border:1px solid var(--line3,#34343d);background:transparent;color:var(--ink,#f1f0ea);font-weight:600;font-size:15px;cursor:pointer">Back</button>
+          <button onClick="{{ toStep2 }}" style="height:46px;padding:0 22px;border-radius:999px;border:none;background:var(--ink,#f1f0ea);color:var(--bg,#0e0e11);font-weight:700;font-size:15px;cursor:pointer">Mint QR tag</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ step2 }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;gap:28px;align-items:center;flex-wrap:wrap">
+          <div style="width:220px;flex:none;background:#f3f1ea;color:#121214;border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:12px;transform:rotate(-3deg);box-shadow:0 24px 48px rgba(0,0,0,.5)">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-family:Unbounded,sans-serif;font-weight:800;font-size:13px">LOOT</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#5d5c66">{{ draftCode }}</span>
+            </div>
+            <div style="background:#ffffff;border-radius:12px;padding:10px;aspect-ratio:1/1">
+              <sc-if value="{{ qrReady }}" hint-placeholder-val="{{ false }}"><div role="img" aria-label="QR code" style="width:100%;height:100%;background-image:url({{ draftQr }});background-size:contain;background-repeat:no-repeat;background-position:center;image-rendering:pixelated"></div></sc-if>
+            </div>
+            <div style="font-family:Unbounded,sans-serif;font-weight:800;font-size:17px;line-height:1.05">IF FOUND,<br>SCAN ME</div>
+          </div>
+          <div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:12px">
+            <div style="font-family:Unbounded,sans-serif;font-weight:800;font-size:clamp(48px,7vw,72px);letter-spacing:-0.04em;line-height:.9;color:var(--limeInk,oklch(0.89 0.19 125))">+{{ draftXp }} XP</div>
+            <div style="font-family:Unbounded,sans-serif;font-weight:700;font-size:20px;letter-spacing:-0.02em">{{ draftNick }} is minted.</div>
+            <p style="margin:0;font-size:15px;color:var(--ink2,#b9b8c2);line-height:1.55;text-wrap:pretty">Tag {{ draftCode }} points to {{ draftUrlShort }}. Stick it on — anyone who scans it lands on its page.</p>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
+          <button onClick="{{ toStep1 }}" style="height:46px;padding:0 20px;border-radius:999px;border:1px solid var(--line3,#34343d);background:transparent;color:var(--ink,#f1f0ea);font-weight:600;font-size:15px;cursor:pointer">Back</button>
+          <button onClick="{{ saveAdd }}" style="height:46px;padding:0 24px;border-radius:999px;border:none;background:oklch(0.89 0.19 125);color:#0e0e11;font-weight:700;font-size:15px;cursor:pointer" style-hover="background:#e4ff8a">Add to vault</button>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isNarrow }}" hint-placeholder-val="{{ false }}">
+    <nav style="position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;gap:4px;padding:6px 8px calc(6px + env(safe-area-inset-bottom));background:var(--bgA,rgba(14,14,17,.84));backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line,#2a2a32)">
+      <sc-for list="{{ nav }}" as="n" hint-placeholder-count="5">
+        <button onClick="{{ n.on }}" style="flex:1;min-width:0;height:48px;border-radius:12px;border:none;background:{{ n.bg }};color:{{ n.fg }};font-weight:600;font-size:12px;cursor:pointer;padding:0 2px;white-space:nowrap">{{ n.s }}</button>
+      </sc-for>
+    </nav>
+  </sc-if>
+  <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;left:50%;bottom:{{ toastBottom }};transform:translateX(-50%);z-index:90;max-width:calc(100% - 32px);background:var(--ink,#f1f0ea);color:var(--bg,#0e0e11);border-radius:999px;padding:8px 20px 8px 8px;display:flex;align-items:center;gap:12px;box-shadow:0 24px 60px rgba(0,0,0,.55)">
+      <span style="flex:none;background:var(--bg,#0e0e11);color:var(--limeInk,oklch(0.89 0.19 125));font-family:Unbounded,sans-serif;font-weight:700;font-size:14px;padding:9px 14px;border-radius:999px">{{ toast.big }}</span>
+      <span style="font-weight:600;font-size:14px">{{ toast.small }}</span>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;tiltStrength&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:14,&quot;min&quot;:0,&quot;max&quot;:30,&quot;step&quot;:1,&quot;unit&quot;:&quot;°&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;3D&quot;},&quot;autoSpin&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;3D&quot;},&quot;showQrOnCards&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Cards&quot;}}">
+class Component extends DCLogic {
+  state = {
+    items: [
+      { id: 'comet', code: 'BK-002', cat: 'Rides', type: 'road bike', name: 'Canyon Endurace CF 7', nickname: 'Comet', rarity: 'legendary', since: '2022', scans: 6, xp: 320, scanned: true, model3d: 'bike.html', lost: false, lent: null,
+        stats: [{ l: 'Km ridden', v: '3,482' }, { l: 'Longest ride', v: '142 km' }, { l: 'Next service', v: 'in 318 km' }, { l: 'Owned since', v: 'Mar 2022' }],
+        pub: [{ l: 'Ridden', v: '3,482 km' }, { l: 'Longest ride', v: '142 km' }],
+        note: `If you found Comet, please don't ride off into the sunset with it. Message me and I'll come pick it up — reward on me.`,
+        journal: [{ d: 'Nov 11', k: 'Service', t: 'New chain + cassette' }, { d: 'Oct 30', k: 'Milestone', t: 'Crossed 3,000 km' }, { d: 'Aug 14', k: 'Trip', t: 'Alps loop · 142 km, 2,900 m up' }],
+        priv: { serial: 'CN-ENDR-7F2-48213', paid: '€2,899', warranty: 'Mar 2028 · 16 months left', insured: 'Yes · Hepster' } },
+      { id: 'bigblue', code: 'CR-001', cat: 'Rides', type: 'car', name: 'Subaru Outback 2019', nickname: 'Big Blue', rarity: 'legendary', since: '2020', scans: 4, xp: 280, scanned: false, lost: false, lent: null,
+        stats: [{ l: 'Odometer', v: '48,210 km' }, { l: 'Road trips', v: '23' }, { l: 'Next service', v: 'Feb 2027' }, { l: 'Owned since', v: 'Jun 2020' }],
+        pub: [{ l: 'Odometer', v: '48,210 km' }, { l: 'Road trips', v: '23' }],
+        note: `Big Blue has carried me through 23 road trips. Lights left on, window open, parked badly? Let me know — thank you.`,
+        journal: [{ d: 'Oct 2', k: 'Service', t: 'Winter tyres on' }, { d: 'Jul 19', k: 'Trip', t: 'Baltic coast · 1,180 km' }],
+        priv: { serial: 'VIN JF2…9A31', paid: '€24,500', warranty: 'Expired Jun 2024', insured: 'Yes · Allianz' } },
+      { id: 'moonbeam', code: 'LP-003', cat: 'Tech', type: 'laptop', name: 'MacBook Pro 14″', nickname: 'Moonbeam', rarity: 'epic', since: '2023', scans: 3, xp: 240, scanned: true, lost: false, lent: null,
+        stats: [{ l: 'Battery cycles', v: '212' }, { l: 'Storage', v: '1 TB' }, { l: 'Stickers', v: '14' }, { l: 'Owned since', v: 'Sep 2023' }],
+        pub: [{ l: 'Stickers', v: '14' }, { l: 'Owned since', v: '2023' }],
+        note: `Moonbeam holds years of my work. Please message me or hand it in — no questions asked, reward guaranteed.`,
+        journal: [{ d: 'Sep 5', k: 'Milestone', t: '200 battery cycles' }],
+        priv: { serial: 'C02-XQ9-L4PT', paid: '€2,449', warranty: 'Sep 2026 · AppleCare+', insured: 'AppleCare+' } },
+      { id: 'oracle', code: 'PH-004', cat: 'Tech', type: 'phone', name: 'Pixel 9 Pro', nickname: 'Pocket Oracle', rarity: 'rare', since: '2024', scans: 5, xp: 180, scanned: false, lost: false, lent: null,
+        stats: [{ l: 'Storage', v: '256 GB' }, { l: 'Case', v: 'Olive' }, { l: 'Photos', v: '8,140' }, { l: 'Owned since', v: 'Oct 2024' }],
+        pub: [{ l: 'Case', v: 'Olive' }, { l: 'Owned since', v: '2024' }],
+        note: `You're holding my phone. Tap Message Kai below and I'll come to you.`,
+        journal: [{ d: 'Oct 24', k: 'Milestone', t: 'One year, zero cracks' }],
+        priv: { serial: 'IMEI …8831', paid: '€1,099', warranty: 'Oct 2026 · 11 months left', insured: 'No' } },
+      { id: 'hush', code: 'HP-005', cat: 'Gear', type: 'headphones', name: 'Sony WH-1000XM5', nickname: 'Hush', rarity: 'rare', since: '2023', scans: 2, xp: 150, scanned: false, lost: false, lent: null,
+        stats: [{ l: 'Hours played', v: '640 h' }, { l: 'Flights', v: '11' }, { l: 'Ear pads', v: 'New in 2025' }, { l: 'Owned since', v: 'Feb 2023' }],
+        pub: [{ l: 'Hours played', v: '640 h' }, { l: 'Flights', v: '11' }],
+        note: `Hush has been on 11 flights with me. Help it make it home for the 12th.`,
+        journal: [{ d: 'Mon', k: 'Milestone', t: 'Came home — thanks Lena' }, { d: 'Oct 2', k: 'Service', t: 'New ear pads' }],
+        priv: { serial: 'SN 5021-77-HX', paid: '€349', warranty: 'Expired Feb 2025', insured: 'No' } },
+      { id: 'shutter', code: 'CM-006', cat: 'Gear', type: 'camera', name: 'Fujifilm X100V', nickname: 'Shutterbug', rarity: 'epic', since: '2021', scans: 3, xp: 260, scanned: true, lost: false, lent: { to: 'Sam', since: 'Nov 2', due: 'Nov 20' },
+        stats: [{ l: 'Shutter count', v: '18,904' }, { l: 'Trips', v: '9' }, { l: 'Film sim', v: 'Classic Chrome' }, { l: 'Owned since', v: 'May 2021' }],
+        pub: [{ l: 'Shutter count', v: '18,904' }, { l: 'Trips', v: '9' }],
+        note: `The memory card in here has photos I can't replace. Please message me — the reward is real.`,
+        journal: [{ d: 'Nov 2', k: 'Trip', t: 'Lent to Sam for Lisbon' }, { d: 'Jun 8', k: 'Milestone', t: 'Shutter 15,000' }],
+        priv: { serial: 'FF 12A-00897', paid: '€1,399', warranty: 'Expired May 2023', insured: 'Yes · Hepster' } }
+,
+      { id: 'miso', code: 'PT-007', cat: 'Pets', type: 'cat', name: 'Tabby cat · 4 yrs', nickname: 'Miso', rarity: 'legendary', since: '2022', scans: 1, xp: 300, scanned: false, lost: false, lent: null,
+        stats: [{ l: 'Microchipped', v: 'Yes' }, { l: 'Weight', v: '4.2 kg' }, { l: 'Last vet visit', v: 'Sep 2026' }, { l: 'Home since', v: 'May 2022' }],
+        pub: [{ l: 'Microchipped', v: 'Yes' }, { l: 'Indoor cat', v: 'Should not be out' }],
+        note: `Miso is an indoor cat and shouldn't be outside. If you found her, please keep her somewhere safe and message me — I'll come right away.`,
+        journal: [{ d: 'Sep 14', k: 'Service', t: 'Annual vaccines + check-up' }, { d: 'May 3', k: 'Milestone', t: '4 years with us' }],
+        priv: { serial: '276098100012345', paid: '€0 · adopted', warranty: 'Valid to Sep 2027', insured: 'Yes · Petplan' } },
+      { id: 'bruno', code: 'SD-008', cat: 'Street dogs', type: 'street dog', name: 'Street dog · Görlitzer Park', nickname: 'Bruno', rarity: 'epic', since: '2025', scans: 9, xp: 220, scanned: false, lost: false, lent: null,
+        stats: [{ l: 'Last seen', v: 'Görli, east gate' }, { l: 'Sightings', v: '9' }, { l: 'Vaccinated', v: 'Oct 2026' }, { l: 'Neutered', v: 'Yes' }],
+        pub: [{ l: 'Last seen', v: 'Görli, east gate' }, { l: 'Vaccinated', v: 'Oct 2026' }],
+        note: `Bruno isn't lost — he's a street dog I feed every morning at the east gate. Friendly, loves cheese, scared of bikes. If he looks hurt or hasn't been seen in days, message me.`,
+        journal: [{ d: 'Nov 10', k: 'Note', t: 'Fed at east gate · 8:10' }, { d: 'Oct 19', k: 'Service', t: 'Rabies + distemper shots, Tierarzt Kreuzberg' }],
+        priv: { serial: 'No chip · collar tag only', paid: '€140 · vet bills', warranty: 'Shots valid to Oct 2027', insured: 'No' } }
+    ],
+    events: [
+      { t: 'sight', item: 'bruno', who: 'A neighbour', place: 'Görlitzer Park, east gate', ago: '3 h ago', ll: [52.4965, 13.4385] },
+      { t: 'sight', item: 'bruno', who: 'Anonymous', place: 'Wiener Str. corner', ago: 'Sun', ll: [52.4985, 13.4345] },
+      { t: 'scan', item: 'comet', who: 'Anonymous finder', place: 'Tempelhofer Feld', ago: '2 h ago', ll: [52.473, 13.401] },
+      { t: 'coffee', item: 'hush', who: 'Lena K.', place: 'Café Oslo · Tuesday 5 pm', ago: 'Yesterday', text: 'Flat white for me. See you there!' },
+      { t: 'msg', item: 'hush', who: 'Lena K.', place: 'Café Oslo, Neukölln', ago: 'Yesterday', text: "Found these on a bench outside — DM me and I'll bring them over!", ll: [52.481, 13.433] },
+      { t: 'journal', item: 'comet', who: 'You', place: '', ago: 'Yesterday', text: 'New chain + cassette' },
+      { t: 'scan', item: 'oracle', who: 'Anonymous finder', place: 'U Warschauer Str.', ago: 'Mon', ll: [52.505, 13.449] },
+      { t: 'found', item: 'hush', who: 'Lena K.', place: 'Returned at Café Oslo', ago: 'Mon', ll: [52.481, 13.433] },
+      { t: 'lend', item: 'shutter', who: 'Sam', place: '', ago: 'Nov 2', text: 'Due back Nov 20' },
+      { t: 'scan', item: 'bigblue', who: 'Anonymous finder', place: 'Mauerpark', ago: 'Oct 28', ll: [52.543, 13.402] },
+      { t: 'scan', item: 'comet', who: 'Anonymous finder', place: 'Görlitzer Park', ago: 'Oct 21', ll: [52.497, 13.437] }
+    ],
+    sets: [
+      { id: 'road', name: 'Road kit', bonus: '+10% XP on ride entries', items: ['comet', 'shutter', 'hush'], missing: null },
+      { id: 'edc', name: 'Daily carry', bonus: 'Streak shield · one missed day forgiven', items: ['oracle', 'moonbeam', 'hush'], missing: null },
+      { id: 'studio', name: 'Studio', bonus: 'Unlocks the Studio badge', items: ['shutter', 'moonbeam'], missing: 'Tripod' },
+      { id: 'garage', name: 'Garage', bonus: 'Road-trip log on Big Blue', items: ['bigblue', 'comet'], missing: 'Roof rack' }
+,
+      { id: 'pack', name: 'The pack', bonus: 'Pet-sitter mode · friends can check in on your pets', items: ['miso', 'bruno'], missing: 'Collar tag' }
+    ],
+    vw: 1200, view: 'vault', selId: null, finderId: 'comet', filter: 'All', mapItem: 'all',
+    tilt: null, rot: -24, dragging: false, spin: true, hoverStage: false,
+    playing: false, t: 0.31,
+    xp: 2340, level: 12,
+    streak: 11, checkedIn: false, wk: { journal: 1, scan3d: 0, finder: 2, added: 0, sight: 0 }, claimed: {},
+    journalText: '', lendTo: '', lendDue: '',
+    addOpen: false, addStep: 0, addMode: 'instant', draft: null,
+    scanning: false, scanPct: 0, showModel: true,
+    toast: null, qrReady: false, theme: 'dark', muted: false, coffees: 4, coffeeWhen: 'Tomorrow'
+  };
+
+  componentDidMount() {
+    let theme = 'dark', muted = false;
+    try { theme = localStorage.getItem('loot.theme') === 'light' ? 'light' : 'dark'; muted = localStorage.getItem('loot.muted') === '1'; } catch (e) {}
+    this.applyTheme(theme);
+    this.setState({ theme, muted });
+    const poll = () => { if (window.qrcode) this.setState({ qrReady: true }); else this._poll = setTimeout(poll, 150); };
+    poll();
+    this._tick = setInterval(() => this.tick(), 50);
+    this._key = e => { if (e.key === 'Escape') this.setState({ selId: null, addOpen: false, scanning: false, scanPct: 0 }); };
+    window.addEventListener('keydown', this._key);
+    this._rs = () => this.setState({ vw: window.innerWidth }); window.addEventListener('resize', this._rs); this._rs();
+  }
+
+  componentDidUpdate() { this.syncMap(); }
+
+  componentWillUnmount() {
+    clearTimeout(this._poll); clearInterval(this._tick); clearTimeout(this._tt); clearTimeout(this._lpoll);
+    window.removeEventListener('keydown', this._key); window.removeEventListener('resize', this._rs);
+    if (this._map) { this._map.remove(); this._map = null; }
+  }
+
+  applyTheme(t) {
+    const L = { bg: '#f4f3ee', bgA: 'rgba(244,243,238,.86)', panel: '#ffffff', panel2: '#efeee8', deep: '#faf9f5', line: '#e2e0d7', line2: '#e9e7df', line3: '#cfcdc3', ink: '#121214', ink2: '#4a4954', ink3: '#5d5c66', ink4: '#66656f', ink5: '#7b7a85', sub: '#3b3a44', track: '#cfcdc3', grid: 'rgba(0,0,0,.07)', stage1: '#e4e2d9', stage2: '#f0efe9', slab: '#ffffff', limeInk: 'oklch(0.52 0.16 125)' };
+    const r = document.documentElement.style;
+    Object.keys(L).forEach(k => t === 'light' ? r.setProperty('--' + k, L[k]) : r.removeProperty('--' + k));
+    document.documentElement.style.background = document.body.style.background = t === 'light' ? L.bg : '#0e0e11';
+    r.colorScheme = t;
+  }
+
+  snd(kind) {
+    if (this.state.muted) return;
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+      this._ac = this._ac || new AC(); const ac = this._ac; if (ac.state === 'suspended') ac.resume();
+      const seq = { scan: [[880, 0, .14], [1318, .13, .22]], xp: [[659, 0, .09], [988, .09, .16]], levelup: [[523, 0, .14], [659, .13, .14], [784, .26, .14], [1047, .39, .4]], claim: [[740, 0, .1], [1109, .1, .24]], tap: [[520, 0, .06]] }[kind] || [];
+      const t0 = ac.currentTime + .01;
+      seq.forEach(([f, at, d]) => {
+        const o = ac.createOscillator(), g = ac.createGain();
+        o.type = kind === 'levelup' ? 'triangle' : 'sine'; o.frequency.value = f;
+        g.gain.setValueAtTime(.0001, t0 + at); g.gain.exponentialRampToValueAtTime(.2, t0 + at + .015); g.gain.exponentialRampToValueAtTime(.0001, t0 + at + d);
+        o.connect(g); g.connect(ac.destination); o.start(t0 + at); o.stop(t0 + at + d + .05);
+      });
+    } catch (e) {}
+  }
+
+  tick() {
+    const s = this.state, upd = {};
+    let done = null;
+    if (s.playing) upd.t = (s.t + 0.05 / 222) % 1;
+    if (s.spin && s.selId && !s.dragging && !s.hoverStage) upd.rot = s.rot + 0.5;
+    if (s.scanning) {
+      const pct = s.scanPct + 1.6;
+      if (pct >= 100) done = s.scanning; else upd.scanPct = pct;
+    }
+    if (Object.keys(upd).length) this.setState(upd);
+    if (done) this.finishScan(done);
+  }
+
+  qr(text, cell) {
+    if (!window.qrcode) return '';
+    this._qrc = this._qrc || {};
+    const k = cell + '|' + text;
+    if (!this._qrc[k]) { const q = window.qrcode(0, 'M'); q.addData(text); q.make(); this._qrc[k] = q.createDataURL(cell, 0); }
+    return this._qrc[k];
+  }
+
+  flash(big, small) {
+    this.setState({ toast: { big, small } });
+    clearTimeout(this._tt);
+    this._tt = setTimeout(() => this.setState({ toast: null }), 2800);
+  }
+
+  award(n, msg, kind) {
+    let xp = this.state.xp + n, level = this.state.level, up = false;
+    while (xp >= level * 250) { xp -= level * 250; level++; up = true; }
+    this.setState({ xp, level });
+    this.flash(up ? `LV ${level} · +${n} XP` : `+${n} XP`, up ? `Level up! ${msg}` : msg);
+    this.snd(up ? 'levelup' : (kind || 'xp'));
+  }
+
+  go(view) { this.setState({ view, selId: null }); window.scrollTo(0, 0); }
+
+  finishScan(kind) {
+    const s = this.state;
+    if (kind === 'detail') {
+      const it = s.items.find(i => i.id === s.selId);
+      if (!it) return this.setState({ scanning: false, scanPct: 0 });
+      const before = s.items.filter(i => i.scanned).length;
+      this.setState({ scanning: false, scanPct: 0, wk: { ...s.wk, scan3d: s.wk.scan3d + 1 }, items: s.items.map(i => i.id === it.id ? { ...i, scanned: true, xp: i.xp + 80 } : i) });
+      this.award(80, before === 3 ? 'Badge unlocked: 3D curator' : `${it.nickname} scanned in 3D`, 'scan');
+    } else {
+      this.setState({ scanning: false, scanPct: 0, draft: { ...s.draft, scanned: true } });
+      this.snd('scan');
+    }
+  }
+
+  codeFor(d, n) {
+    const pre = d.cat === 'Street dogs' ? 'SD' : d.cat === 'Pets' ? 'PT' : ((d.name || d.nickname || 'IT').replace(/[^a-z]/gi, '').slice(0, 2).toUpperCase() + 'XX').slice(0, 2);
+    return `${pre}-${String(n).padStart(3, '0')}`;
+  }
+
+  saveAdd(quick) {
+    const s = this.state, d = s.draft;
+    const code = this.codeFor(d, s.items.length + 1);
+    const dog = d.cat === 'Street dogs', pet = d.cat === 'Pets';
+    const nick = d.nickname.trim() || d.name.trim() || (dog ? 'New pup' : pet ? 'New buddy' : 'New loot');
+    const place = (d.place || '').trim();
+    const type = d.name.trim() || (dog ? 'street dog' : pet ? 'pet' : 'item');
+    const stat = !quick && d.statL.trim() && d.statV.trim() ? [{ l: d.statL.trim(), v: d.statV.trim() }] : [];
+    const loc = place || (d.ll ? 'Pinned on map' : 'Unknown');
+    const base = dog ? [{ l: 'Last seen', v: loc }, { l: 'Sightings', v: '1' }, { l: 'Vaccinated', v: 'Unknown' }]
+      : pet ? [{ l: 'Species', v: type }, { l: 'Microchipped', v: 'Add in vault' }, { l: 'Walks this week', v: '0' }]
+      : [{ l: '3D scan', v: d.scanned ? 'Captured' : 'Not yet' }, { l: 'Finder scans', v: '0' }];
+    const item = {
+      id: d.id, code, cat: d.cat, type, nickname: nick, rarity: d.rarity, since: '2026',
+      name: dog ? 'Street dog' + (place ? ' · ' + place : '') : (d.name.trim() || (pet ? 'Pet' : 'Unnamed item')),
+      scans: 0, xp: 150 + (d.scanned ? 80 : 0), scanned: !!d.scanned, lost: false, lent: null,
+      journal: place ? [{ d: 'Today', k: 'Note', t: (dog ? 'First seen at ' : 'Added at ') + place }] : [],
+      stats: [...stat, ...base, { l: 'Tagged', v: 'Nov 2026' }].slice(0, 4),
+      pub: [...stat, ...base].slice(0, 2),
+      note: dog ? `${nick} is a street dog I look after — friendly, fed daily${place ? ' near ' + place : ''}. If ${nick} looks hurt or lost, message me.`
+        : pet ? `${nick} is family. If you found ${nick}, please message me right away — reward and endless gratitude.`
+        : `This ${type} belongs to Kai. Please help it get home — there's a reward.`,
+      priv: { serial: pet || dog ? 'Add microchip no.' : 'Add serial', paid: '—', warranty: '—', insured: '—' }
+    };
+    let bonus = null;
+    const nm = (item.name + ' ' + item.nickname).toLowerCase();
+    const sets = s.sets.map(st => st.missing && nm.includes(st.missing.toLowerCase()) ? (bonus = st, { ...st, items: [...st.items, item.id], missing: null }) : st);
+    this.setState({ items: [item, ...s.items], sets, addOpen: false, filter: 'All', draft: null, wk: { ...s.wk, added: s.wk.added + 1 }, events: [{ t: 'tag', item: item.id, who: 'You', place, ago: 'Just now', ll: d.ll || undefined }, ...s.events] });
+    this.award(item.xp + (bonus ? 100 : 0), bonus ? `${nick} completes the ${bonus.name} set` : d.ll ? `${nick} added · pinned on your map` : `${nick} joined the vault`);
+  }
+
+  pins() {
+    const s = this.state;
+    return s.events.filter(e => e.ll && (s.mapItem === 'all' || e.item === s.mapItem)).map(e => {
+      const it = s.items.find(i => i.id === e.item) || {};
+      return { ll: e.ll, nick: it.nickname || '', place: e.place, ago: e.ago, lost: !!it.lost, c: it.lost ? 'oklch(0.64 0.21 25)' : 'var(--limeInk,oklch(0.89 0.19 125))' };
+    });
+  }
+
+  syncMap() {
+    const s = this.state, el = document.getElementById('loot-map');
+    if (s.view !== 'activity' || !el) { if (this._map) { this._map.remove(); this._map = null; this._mapKey = null; } return; }
+    if (!window.L) { if (!this._lpoll) this._lpoll = setTimeout(() => { this._lpoll = null; this.syncMap(); }, 250); return; }
+    const L = window.L;
+    if (this._map && this._map.getContainer() !== el) { this._map.remove(); this._map = null; this._mapKey = null; }
+    if (!this._map) {
+      this._map = L.map(el, { zoomControl: false, scrollWheelZoom: false }).setView([52.505, 13.42], 12);
+      L.control.zoom({ position: 'bottomright' }).addTo(this._map);
+      this._layer = L.layerGroup().addTo(this._map);
+      this._tiles = null; this._tilesUrl = null;
+      setTimeout(() => { if (this._map) this._map.invalidateSize(); }, 80);
+    }
+    const url = s.theme === 'light' ? 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png' : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+    if (!this._tiles || this._tilesUrl !== url) {
+      if (this._tiles) this._tiles.remove();
+      this._tiles = L.tileLayer(url, { attribution: '&copy; OpenStreetMap contributors &copy; CARTO', maxZoom: 19, subdomains: 'abcd' }).addTo(this._map);
+      this._tilesUrl = url;
+    }
+    const pins = this.pins();
+    const key = JSON.stringify(pins.map(p => [p.ll, p.lost]));
+    if (key === this._mapKey) return;
+    this._mapKey = key;
+    this._layer.clearLayers();
+    pins.forEach(p => L.circleMarker(p.ll, { radius: 9, color: p.lost ? '#ff6b61' : '#c9f33f', weight: 3, fillColor: p.lost ? '#ff6b61' : '#c9f33f', fillOpacity: .35 }).bindPopup(`<b>${p.nick}</b><br>${p.place} · ${p.ago}`).addTo(this._layer));
+    if (pins.length > 1) this._map.fitBounds(L.latLngBounds(pins.map(p => p.ll)).pad(.3)); else if (pins.length === 1) this._map.setView(pins[0].ll, 13);
+  }
+
+  async downloadShare(it) {
+    const HEX = { common: '#bdbcc4', rare: '#8fc1ff', epic: '#d4a6ff', legendary: '#f0c75e' };
+    try { await Promise.all(['800 96px Unbounded', '500 40px "DM Sans"', '600 34px "JetBrains Mono"'].map(f => document.fonts.load(f))); } catch (e) {}
+    const c = document.createElement('canvas'); c.width = 1080; c.height = 1350; const x = c.getContext('2d');
+    const rr = (px, py, w, h, r) => { x.beginPath(); x.moveTo(px + r, py); x.arcTo(px + w, py, px + w, py + h, r); x.arcTo(px + w, py + h, px, py + h, r); x.arcTo(px, py + h, px, py, r); x.arcTo(px, py, px + w, py, r); x.closePath(); };
+    x.fillStyle = HEX[it.rarity] || '#bdbcc4'; x.fillRect(0, 0, 1080, 1350);
+    x.fillStyle = 'rgba(0,0,0,.14)'; rr(60, 130, 960, 720, 36); x.fill();
+    const slot = document.getElementById(`loot-${it.id}-front`); const img = slot && slot.shadowRoot && slot.shadowRoot.querySelector('img');
+    if (img && img.naturalWidth) {
+      x.save(); rr(60, 130, 960, 720, 36); x.clip();
+      const sc = Math.max(960 / img.naturalWidth, 720 / img.naturalHeight), w = img.naturalWidth * sc, h = img.naturalHeight * sc;
+      try { x.drawImage(img, 60 + (960 - w) / 2, 130 + (720 - h) / 2, w, h); } catch (e) {}
+      x.restore();
+    }
+    x.fillStyle = '#0e0e11'; x.font = '800 30px Unbounded, sans-serif'; x.fillText('LOOT', 60, 92);
+    x.font = '600 26px "JetBrains Mono", monospace'; x.textAlign = 'right'; x.fillText(it.code, 1020, 92); x.textAlign = 'left';
+    x.font = '800 96px Unbounded, sans-serif'; x.fillText(it.nickname, 60, 980);
+    x.font = '500 40px "DM Sans", sans-serif'; x.fillText(it.name, 60, 1040);
+    x.font = '600 34px "JetBrains Mono", monospace'; x.fillText(it.pubLine.toUpperCase(), 60, 1120);
+    x.font = '600 28px "JetBrains Mono", monospace'; x.fillText(it.urlShort, 60, 1270);
+    try { const q = new Image(); q.src = this.qr(it.url, 8); await q.decode(); x.fillStyle = '#ffffff'; rr(820, 1070, 200, 200, 18); x.fill(); x.drawImage(q, 836, 1086, 168, 168); } catch (e) {}
+    let href = '';
+    try { href = c.toDataURL('image/png'); } catch (e) { this.flash('Blocked', 'That photo can’t be exported — drop a local image'); return; }
+    const a = document.createElement('a'); a.download = `loot-${it.code.toLowerCase()}-share.png`; a.href = href; document.body.appendChild(a); a.click(); a.remove();
+    this.flash('Saved', `${it.nickname} share card · 1080 × 1350`); this.snd('tap');
+  }
+
+  eq(playing, color) {
+    return React.createElement('div', { style: { display: 'flex', alignItems: 'flex-end', gap: 3, height: 22, flex: 'none' } },
+      [0, 1, 2, 3].map(i => React.createElement('span', { key: i, style: {
+        width: 4, height: 22, borderRadius: 2, background: color, transformOrigin: 'bottom',
+        transform: playing ? undefined : `scaleY(${[0.3, 0.55, 0.4, 0.25][i]})`,
+        animation: playing ? `lootEq ${0.7 + i * 0.13}s ease-in-out ${i * 0.09}s infinite` : 'none'
+      } })));
+  }
+
+  renderVals() {
+    const s = this.state, p = this.props;
+    const light = s.theme === 'light';
+    const LIME = 'oklch(0.89 0.19 125)', LIME_INK = 'var(--limeInk,oklch(0.89 0.19 125))';
+    const INK = 'var(--ink,#f1f0ea)', BG = 'var(--bg,#0e0e11)', SUB = 'var(--sub,#c9c8d0)', LINE = 'var(--line,#2a2a32)', INK3 = 'var(--ink3,#9b9aa5)', PANEL2 = 'var(--panel2,#1d1d23)';
+    const RARB = { common: ['Common', '#bdbcc4'], rare: ['Rare', 'oklch(0.8 0.13 240)'], epic: ['Epic', 'oklch(0.8 0.14 310)'], legendary: ['Legendary', 'oklch(0.86 0.15 85)'] };
+    const RARL = { common: ['Common', '#5d5c66'], rare: ['Rare', 'oklch(0.5 0.13 240)'], epic: ['Epic', 'oklch(0.5 0.16 310)'], legendary: ['Legendary', 'oklch(0.55 0.14 85)'] };
+    const RAR = light ? RARL : RARB, onRar = light ? '#ffffff' : '#0e0e11';
+    const chip = on => ({ bg: on ? INK : 'transparent', fg: on ? BG : SUB, bd: on ? INK : LINE });
+    const str = p.tiltStrength ?? 14;
+    const autoSpin = p.autoSpin ?? true;
+    const showQr = (p.showQrOnCards ?? true) && s.qrReady;
+
+    const items = s.items.map(it => {
+      const slug = it.code.toLowerCase();
+      const animal = it.cat === 'Street dogs' || it.cat === 'Pets';
+      const dogItem = it.cat === 'Street dogs';
+      return { ...it, rc: RAR[it.rarity][1], rcBright: RARB[it.rarity][1], rarityLabel: RAR[it.rarity][0],
+        frontSlot: `loot-${it.id}-front`, backSlot: `loot-${it.id}-back`, receiptSlot: `loot-${it.id}-receipt`,
+        url: `https://loot.link/kai/${slug}`, urlShort: `loot.link/kai/${slug}`,
+        photoHint: `${it.type} · front photo`, pubText: it.pub.map(x => x.l).join(' · '),
+        pubLine: `${it.pub[0].l} ${it.pub[0].v}`, journalCount: it.journal.length,
+        isDog: dogItem, isPet: it.cat === 'Pets', ownerText: dogItem ? 'is cared for by Kai' : 'belongs to Kai',
+        stickerLine: dogItem ? `${it.nickname} is cared for by Kai. Scan if hurt or lost.` : `${it.nickname} belongs to Kai. Reward if returned.`,
+        pl1: animal ? 'MICROCHIP' : 'SERIAL NO.', pl2: animal ? 'COSTS' : 'PAID', pl3: animal ? 'VACCINES' : 'WARRANTY', pl4: 'INSURED',
+        isLent: !!it.lent, notLent: !it.lent, lentLabel: it.lent ? `Lent → ${it.lent.to}` : '', lentTo: it.lent ? it.lent.to : '', lentToUpper: it.lent ? it.lent.to.toUpperCase() : '' };
+    });
+    const totalScans = items.reduce((a, i) => a + i.scans, 0);
+    const scannedCount = items.filter(i => i.scanned).length;
+    const need = s.level * 250;
+    const rankTitle = s.level < 10 ? 'Collector' : s.level < 15 ? 'Vault keeper' : 'Curator';
+    const left3d = 4 - scannedCount;
+    const nextQuest = left3d > 0 ? `Scan ${left3d} more item${left3d > 1 ? 's' : ''} in 3D to unlock 3D curator`
+      : totalScans < 25 ? `Get ${25 - totalScans} more finder scans for Scan magnet` : 'Tag something new for +150 XP';
+
+    const badges = [
+      { g: '01', t: 'First tag', d: 'QR #1 stuck', on: true },
+      { g: '3K', t: '3,000 km club', d: 'Comet hit 3K', on: true },
+      { g: '×6', t: 'Full kit', d: `${Math.min(items.length, 6)}/6 items`, on: items.length >= 6 },
+      { g: '↩', t: 'Boomerang', d: 'Lost & returned', on: true },
+      { g: '3D', t: '3D curator', d: `${Math.min(scannedCount, 4)}/4 scanned`, on: scannedCount >= 4 },
+      { g: '25', t: 'Scan magnet', d: `${Math.min(totalScans, 25)}/25 scans`, on: totalScans >= 25 }
+    ].map(b => ({ ...b, bg: b.on ? LIME : 'var(--line2,#24242b)', fg: b.on ? '#0e0e11' : 'var(--ink5,#77768a)', op: b.on ? 1 : 0.8 }));
+
+    const activeSet = s.filter.startsWith('set:') ? s.sets.find(x => 'set:' + x.id === s.filter) : null;
+    const counts = { All: items.length };
+    items.forEach(i => { counts[i.cat] = (counts[i.cat] || 0) + 1; });
+    const filters = ['All', 'Tech', 'Rides', 'Gear', 'Pets', 'Street dogs'].map(f => ({ label: f, n: counts[f] || 0, on: () => this.setState({ filter: f }), ...chip(s.filter === f) }));
+    if (activeSet) filters.push({ label: activeSet.name + ' set', n: activeSet.items.length, on: () => this.setState({ filter: 'All' }), ...chip(true) });
+
+    const cards = items.filter(i => s.filter === 'All' || i.cat === s.filter || (activeSet && activeSet.items.includes(i.id))).map(it => {
+      const t = s.tilt && s.tilt.id === it.id ? s.tilt : null;
+      return { ...it, top: it.stats.slice(0, 2), qrSmall: showQr ? this.qr(it.url, 2) : '',
+        transform: t ? `rotateX(${(-t.y * str).toFixed(2)}deg) rotateY(${(t.x * str).toFixed(2)}deg) translateY(-6px)` : 'rotateX(0deg) rotateY(0deg) translateY(0px)',
+        transition: t ? 'transform 90ms linear, box-shadow .3s' : 'transform .6s cubic-bezier(.2,.8,.2,1), box-shadow .3s',
+        shadow: t ? `${(-t.x * 30).toFixed(0)}px 30px 60px rgba(0,0,0,.35), 0 0 0 1px ${it.rc}` : '0 0 0 0 rgba(0,0,0,0)',
+        shine: t ? `radial-gradient(circle at ${((t.x + 0.5) * 100).toFixed(1)}% ${((t.y + 0.5) * 100).toFixed(1)}%, rgba(255,255,255,.14), rgba(255,255,255,0) 55%)` : 'none',
+        shineOp: t ? 1 : 0,
+        onMove: e => { const r = e.currentTarget.getBoundingClientRect(); this.setState({ tilt: { id: it.id, x: (e.clientX - r.left) / r.width - 0.5, y: (e.clientY - r.top) / r.height - 0.5 } }); },
+        onLeave: () => this.setState({ tilt: null }),
+        onOpen: () => { this.setState({ selId: it.id, rot: -24, spin: autoSpin, tilt: null, hoverStage: false }); this.snd('tap'); }
+      };
+    });
+
+    const sets = s.sets.map(st => {
+      const have = st.items.length, total = have + (st.missing ? 1 : 0), complete = !st.missing, on = activeSet && activeSet.id === st.id;
+      return { ...st, count: `${have}/${total}`, cc: complete ? LIME_INK : INK3, bd: on ? INK : LINE,
+        bonusLabel: complete ? 'BONUS ACTIVE' : 'BONUS LOCKED', bfg: complete ? INK : INK3,
+        slots: [...st.items.map(id => { const it = items.find(i => i.id === id) || {}; return { l: it.nickname || id, bs: 'solid', bc: it.rc || LINE, fg: INK }; }),
+          ...(st.missing ? [{ l: '+ ' + st.missing, bs: 'dashed', bc: 'var(--line3,#34343d)', fg: INK3 }] : [])],
+        on: () => { this.setState({ filter: on ? 'All' : 'set:' + st.id }); this.snd('tap'); } };
+    });
+
+    const today = 3;
+    const weekDots = ['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((l, i) => ({ l,
+      bg: i < today || (i === today && s.checkedIn) ? LIME : i === today ? 'transparent' : PANEL2,
+      bd: i === today ? LIME_INK : 'transparent' }));
+    const quests = [
+      { id: 'journal', t: 'Log 2 journal entries', n: s.wk.journal, m: 2, xp: 60 },
+      { id: 'scan3d', t: 'Scan an item in 3D', n: s.wk.scan3d, m: 1, xp: 40 },
+      { id: 'finder', t: 'Get 3 finder scans', n: s.wk.finder, m: 3, xp: 50 },
+      { id: 'added', t: 'Tag a new item', n: s.wk.added, m: 1, xp: 100 },
+      { id: 'streak', t: 'Keep a 7-day streak', n: s.streak, m: 7, xp: 70 },
+      { id: 'sight', t: 'Log a street-dog sighting', n: s.wk.sight, m: 1, xp: 30 }
+    ].map(q => {
+      const done = q.n >= q.m, claimed = !!s.claimed[q.id];
+      return { ...q, nText: `${Math.min(q.n, q.m)}/${q.m}`, pct: `${Math.min(100, q.n / q.m * 100).toFixed(0)}%`, claimable: done && !claimed, claimed, pending: !done,
+        claim: () => { this.setState(st => ({ claimed: { ...st.claimed, [q.id]: true } })); this.award(q.xp, `Quest complete: ${q.t}`, 'claim'); } };
+    });
+
+    const G = { scan: ['QR', LIME, '#0e0e11'], msg: ['MSG', INK, BG], journal: ['LOG', PANEL2, INK], found: ['RET', LIME, '#0e0e11'], lend: ['LND', PANEL2, INK], lost: ['LST', 'oklch(0.64 0.21 25)', '#ffffff'], tag: ['NEW', LIME, '#0e0e11'], coffee: ['TIP', LIME, '#0e0e11'], sight: ['SEEN', LIME, '#0e0e11'] };
+    const feed = s.events.map(e => {
+      const it = s.items.find(x => x.id === e.item) || { nickname: 'an item' }, n = it.nickname;
+      const title = { scan: `${n} was scanned`, msg: `${e.who} messaged about ${n}`, journal: `You logged on ${n}`, found: `${n} came home`, lend: `${n} lent to ${e.who}`, lost: `${n} reported lost`, tag: `You tagged ${n}`, coffee: `${e.who} wants to grab that coffee`, sight: `${n} was spotted` }[e.t] || n;
+      const g = G[e.t] || G.journal;
+      return { title, meta: [e.who, e.place].filter(Boolean).join(' · '), ago: e.ago, text: e.text || '', hasText: !!e.text, g: g[0], gbg: g[1], gfg: g[2] };
+    });
+    const mapIds = ['all', ...items.filter(i => s.events.some(e => e.ll && e.item === i.id)).map(i => i.id)];
+    const mapChips = mapIds.map(id => ({ l: id === 'all' ? 'All items' : (items.find(i => i.id === id) || {}).nickname, on: () => this.setState({ mapItem: id }), ...chip(s.mapItem === id) }));
+
+    const sr = items.find(i => i.id === s.selId);
+    const sel = sr ? { ...sr, nicknameUpper: sr.nickname.toUpperCase(), qrBig: this.qr(sr.url, 6), qrTiny: this.qr(sr.url, 2), edge: `color-mix(in oklch, ${sr.rc} 45%, var(--deep,#121216))`,
+      caption: `${sr.nickname} — my ${sr.type}, ${sr.pubLine.toLowerCase()}. Tagged with LOOT: if you ever find it, scan the sticker and it finds its way home. ${sr.urlShort}` } : {};
+    const dScanning = s.scanning === 'detail';
+    const addJournal = () => {
+      const t = s.journalText.trim(); if (!sr || !t) return;
+      const k = /service|pads|chain|tyre|tire|oil|repair|fix|clean|battery|replace|wash/i.test(t) ? 'Service' : /\d/.test(t) ? 'Milestone' : 'Note';
+      this.setState(st => ({ journalText: '', wk: { ...st.wk, journal: st.wk.journal + 1 }, items: st.items.map(i => i.id === sr.id ? { ...i, journal: [{ d: 'Today', k, t }, ...i.journal] } : i), events: [{ t: 'journal', item: sr.id, who: 'You', place: '', ago: 'Just now', text: t }, ...st.events] }));
+      this.award(25, `Logged on ${sr.nickname}`);
+    };
+
+    const fr = items.find(i => i.id === s.finderId) || items[0];
+    const f = { ...fr, qrSticker: this.qr(fr.url, 4),
+      foundLabel: fr.isDog ? 'YOU MET' : 'YOU FOUND', ownerLine: fr.isDog ? 'Looked after by Kai Moreno' : 'Belongs to Kai Moreno',
+      shareLabel: fr.isDog ? 'Report a sighting' : 'Share where I found it',
+      lostLine: fr.isDog ? `Kai hasn't seen ${fr.nickname} in days. Please report a sighting.` : 'Kai is looking for this right now. Please get in touch.' };
+
+    const d = s.draft || { id: 'x', nickname: '', name: '', cat: 'Tech', rarity: 'rare', statL: '', statV: '', scanned: false, place: '', ll: null, locStatus: '', acc: 0 };
+    const setD = k => e => { const v = e.target.value; this.setState(st => ({ draft: { ...st.draft, [k]: v } })); };
+    const draftCode = this.codeFor(d, s.items.length + 1);
+    const draftUrl = `https://loot.link/kai/${draftCode.toLowerCase()}`;
+    const len = 222, cur = Math.floor(s.t * len);
+
+    return {
+      isVault: s.view === 'vault', isFinder: s.view === 'finder', isActivity: s.view === 'activity', isWall: s.view === 'wall', isStickers: s.view === 'stickers',
+      nav: [['Vault', 'vault', 'Vault'], ['Activity', 'activity', 'Activity'], ['Trophy wall', 'wall', 'Wall'], ['Stickers', 'stickers', 'Stickers'], ['Finder view', 'finder', 'Finder']].map(([l, k, sl]) => ({ l, s: sl, on: () => this.go(k), ...chip(s.view === k) })),
+      goVault: () => this.go('vault'),
+      toggleTheme: () => { const t = light ? 'dark' : 'light'; try { localStorage.setItem('loot.theme', t); } catch (e) {} this.applyTheme(t); this.setState({ theme: t }); this.snd('tap'); },
+      themeLabel: light ? 'Dark mode' : 'Light mode',
+      toggleMute: () => { const m = !s.muted; try { localStorage.setItem('loot.muted', m ? '1' : '0'); } catch (e) {} this.setState({ muted: m }); if (!m) setTimeout(() => this.snd('claim'), 0); },
+      soundLabel: s.muted ? 'Sound off' : 'Sound on',
+
+      level: s.level, nextLevel: s.level + 1, rankTitle, rankTitleUpper: rankTitle.toUpperCase(),
+      xpText: `${s.xp.toLocaleString()} / ${need.toLocaleString()} XP`, xpPct: `${(s.xp / need * 100).toFixed(1)}%`,
+      nextQuest, totalScans,
+      heroStats: [
+        { l: 'Items', v: String(items.length) }, { l: 'Finder scans', v: String(totalScans) },
+        { l: 'Coffees had', v: String(s.coffees) }, { l: '3D scans', v: `${scannedCount}/${items.length}` }
+      ],
+      links: [
+        { k: 'Instagram', v: '@kai.makes', href: '#' }, { k: 'Portfolio', v: 'kai.works', href: '#' },
+        { k: 'Website', v: 'kaimoreno.com', href: '#' }, { k: 'Strava', v: 'Comet’s rides', href: '#' }
+      ],
+      badges, badgesOn: badges.filter(b => b.on).length, badgesEarned: badges.filter(b => b.on),
+
+      playing: s.playing, notPlaying: !s.playing,
+      togglePlay: () => this.setState({ playing: !s.playing }),
+      tNow: `${Math.floor(cur / 60)}:${String(cur % 60).padStart(2, '0')}`, tPct: `${(s.t * 100).toFixed(1)}%`,
+      eqBars: this.eq(s.playing, LIME_INK), eqBarsPhone: this.eq(s.playing, LIME),
+
+      streak: s.streak, weekDots, canCheckIn: !s.checkedIn, checkedIn: s.checkedIn,
+      checkIn: () => { this.setState({ streak: s.streak + 1, checkedIn: true }); this.award(10, `${s.streak + 1}-day streak`); },
+      quests, questsDone: quests.filter(q => !q.pending).length, questCount: quests.length,
+      sets,
+
+      itemCount: items.length, filters, cards, showQr,
+      openAdd: () => this.setState({ addOpen: true, addStep: 0, selId: null, draft: { id: 'n' + Date.now().toString(36), nickname: '', name: '', cat: 'Tech', rarity: 'rare', statL: '', statV: '', scanned: false, place: '', ll: null, locStatus: '', acc: 0 } }),
+
+      eventCount: s.events.length, feed, mapChips, pins: this.pins(),
+
+      wallItems: items,
+      copyPublic: () => { try { navigator.clipboard.writeText('https://loot.link/kai'); } catch (e) {} this.flash('Copied', 'loot.link/kai'); this.snd('tap'); },
+
+      stickers: items.map(i => ({ ...i, qr: this.qr(i.url, 3) })),
+      printSheet: () => { this.snd('tap'); setTimeout(() => window.print(), 80); },
+
+      hasSel: !!sr, sel, qrReady: s.qrReady,
+      closeSel: () => this.setState({ selId: null, hoverStage: false, journalText: '', ...(dScanning ? { scanning: false, scanPct: 0 } : {}) }),
+      stageDown: e => {
+        if (e.button !== 0) return;
+        const start = { x: e.clientX, rot: this.state.rot, moved: false };
+        const move = ev => {
+          const dx = ev.clientX - start.x;
+          if (Math.abs(dx) > 5) start.moved = true;
+          if (start.moved) this.setState({ rot: start.rot + dx * 0.6, dragging: true });
+        };
+        const up = () => {
+          window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up);
+          if (start.moved) {
+            const kill = ev => { ev.stopPropagation(); ev.preventDefault(); };
+            window.addEventListener('click', kill, { capture: true, once: true });
+            setTimeout(() => window.removeEventListener('click', kill, true), 60);
+          }
+          this.setState({ dragging: false });
+        };
+        window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
+      },
+      stageEnter: () => this.setState({ hoverStage: true }),
+      stageLeave: () => this.setState({ hoverStage: false }),
+      stageCursor: s.dragging ? 'grabbing' : 'grab',
+      slabTransform: `rotateX(-8deg) rotateY(${s.rot.toFixed(1)}deg)`,
+      slabTransition: s.dragging || (s.spin && !s.hoverStage) ? 'none' : 'transform .8s cubic-bezier(.2,.8,.2,1)',
+      showFront: () => this.setState({ spin: false, rot: Math.round(s.rot / 360) * 360 }),
+      showBack: () => this.setState({ spin: false, rot: Math.round((s.rot - 180) / 360) * 360 + 180 }),
+      toggleSpin: () => this.setState({ spin: !s.spin }),
+      spinLabel: s.spin ? 'Pause spin' : 'Auto-spin',
+      spinBg: s.spin ? INK : 'transparent', spinFg: s.spin ? BG : INK, spinBd: s.spin ? INK : 'var(--line3,#34343d)',
+      selScanned: !!sr && sr.scanned, selScanning: dScanning, selScanIdle: !!sr && !sr.scanned && !dScanning,
+      selHasModel: !!sr && !!sr.model3d && sr.scanned && s.showModel, selNoModel: !(sr && sr.model3d && sr.scanned && s.showModel),
+      selModelToggle: !!sr && !!sr.model3d && sr.scanned, modelToggleLabel: s.showModel ? 'Photos' : '3D model',
+      toggleModel: () => this.setState({ showModel: !s.showModel }),
+      selModelSrc: sr && sr.model3d ? `${sr.model3d}?bg=${s.theme === 'light' ? 'f0efe9' : '1b1b21'}` : '',
+      startScan: () => { if (!s.scanning) { this.setState({ scanning: 'detail', scanPct: 0, spin: true }); this.snd('tap'); } },
+      scanPctText: `${Math.round(s.scanPct)}%`, scanPctW: `${s.scanPct.toFixed(1)}%`,
+      previewFinder: () => { this.setState({ view: 'finder', finderId: sr.id, selId: null }); window.scrollTo(0, 0); },
+      copyLink: () => { try { navigator.clipboard.writeText(sr.url); } catch (e) {} this.flash('Copied', sr.urlShort); this.snd('tap'); },
+      toggleLost: () => {
+        const lost = !sr.lost;
+        this.setState(st => ({ items: st.items.map(i => i.id === sr.id ? { ...i, lost } : i), events: lost ? [{ t: 'lost', item: sr.id, who: 'You', place: '', ago: 'Just now' }, ...st.events] : st.events }));
+        this.flash(lost ? 'Lost mode on' : 'Lost mode off', lost ? `Finders of ${sr.nickname} see an urgent banner · pins turn red` : `${sr.nickname} is safe in the vault`);
+        this.snd(lost ? 'scan' : 'xp');
+      },
+      lostTrack: sr && sr.lost ? 'oklch(0.64 0.21 25)' : 'var(--track,#2e2e36)', lostKnob: sr && sr.lost ? '26px' : '4px',
+
+      journalText: s.journalText, setJournalText: e => this.setState({ journalText: e.target.value }),
+      addJournal, journalKey: e => { if (e.key === 'Enter') addJournal(); },
+      lendTo: s.lendTo, lendDue: s.lendDue, setLendTo: e => this.setState({ lendTo: e.target.value }), setLendDue: e => this.setState({ lendDue: e.target.value }),
+      lendItem: () => {
+        const to = s.lendTo.trim(); if (!sr) return;
+        if (!to) { this.flash('Who has it?', 'Add a name first'); return; }
+        const lent = { to, since: 'Today', due: s.lendDue.trim() || 'No date' };
+        this.setState(st => ({ items: st.items.map(i => i.id === sr.id ? { ...i, lent } : i), lendTo: '', lendDue: '', events: [{ t: 'lend', item: sr.id, who: to, place: '', ago: 'Just now', text: `Due back ${lent.due}` }, ...st.events] }));
+        this.flash(`Lent to ${to}`, `${sr.nickname}'s tag page now says so`); this.snd('tap');
+      },
+      markReturned: () => {
+        const to = sr.lent ? sr.lent.to : 'them';
+        this.setState(st => ({ items: st.items.map(i => i.id === sr.id ? { ...i, lent: null } : i), events: [{ t: 'found', item: sr.id, who: to, place: 'Returned', ago: 'Just now' }, ...st.events] }));
+        this.award(40, `${sr.nickname} is back from ${to}`);
+      },
+      downloadShare: () => { if (sr) this.downloadShare(sr); },
+      copyCaption: () => { try { navigator.clipboard.writeText(sel.caption); } catch (e) {} this.flash('Copied', 'Caption ready to paste'); this.snd('tap'); },
+
+      f,
+      finderChips: items.map(i => ({ nickname: i.nickname, on: () => this.setState({ finderId: i.id }), bg: i.id === fr.id ? LIME : 'transparent', fg: i.id === fr.id ? '#0e0e11' : SUB, bd: i.id === fr.id ? LIME : LINE })),
+      fMessage: () => {
+        this.setState(st => ({ events: [{ t: 'msg', item: fr.id, who: 'A finder', place: '', ago: 'Just now', text: `Hey Kai, I've got ${fr.nickname}. Where can we meet?` }, ...st.events] }));
+        this.flash('Sent', 'Kai got a ping — it’s in Activity'); this.snd('scan');
+      },
+      fShare: () => {
+        const places = ['Tempelhofer Feld', 'Boxhagener Platz', 'Landwehrkanal', 'Volkspark Friedrichshain', 'Bergmannkiez', 'Hasenheide'];
+        const place = places[Math.floor(Math.random() * places.length)];
+        const ll = [52.5 + (Math.random() - .5) * .08, 13.41 + (Math.random() - .5) * .12];
+        const dog = fr.isDog;
+        this.setState(st => ({ items: st.items.map(i => i.id === fr.id ? { ...i, scans: i.scans + 1 } : i), wk: { ...st.wk, finder: st.wk.finder + (dog ? 0 : 1), sight: st.wk.sight + (dog ? 1 : 0) }, events: [{ t: dog ? 'sight' : 'scan', item: fr.id, who: dog ? 'A passer-by' : 'Anonymous finder', place, ago: 'Just now', ll }, ...st.events] }));
+        this.flash(dog ? 'Sighting logged' : 'Pinned', `${fr.nickname} · ${place} — now on your map`); this.snd('scan');
+      },
+
+      addOpen: s.addOpen,
+      closeAdd: () => this.setState({ addOpen: false, ...(s.scanning === 'add' ? { scanning: false, scanPct: 0 } : {}) }),
+      step0: s.addMode === 'full' && s.addStep === 0, step1: s.addMode === 'full' && s.addStep === 1, step2: s.addMode === 'full' && s.addStep === 2,
+      toStep0: () => this.setState({ addStep: 0 }), toStep1: () => this.setState({ addStep: 1 }), toStep2: () => { this.setState({ addStep: 2 }); this.snd('claim'); },
+      steps: ['Capture', 'Details', 'Mint'].map((l, i) => ({
+        n: `0${i + 1}`, l,
+        bg: i === s.addStep ? LIME : 'transparent', fg: i === s.addStep ? '#0e0e11' : i < s.addStep ? INK : 'var(--ink5,#77768a)',
+        bd: i === s.addStep ? LIME : LINE
+      })),
+      draft: d, draftCode, draftUrlShort: draftUrl.replace('https://', ''), draftQr: this.qr(draftUrl, 6),
+      draftNick: d.nickname.trim() || d.name.trim() || 'New loot', draftXp: 150 + (d.scanned ? 80 : 0),
+      draftFront: `loot-${d.id}-front`, draftBack: `loot-${d.id}-back`,
+      setNick: setD('nickname'), setName: setD('name'), setStatL: setD('statL'), setStatV: setD('statV'),
+      catOpts: ['Tech', 'Rides', 'Gear', 'Pets', 'Street dogs'].map(c => ({ l: c, on: () => this.setState(st => ({ draft: { ...st.draft, cat: c } })), ...chip(d.cat === c) })),
+      rarOpts: Object.keys(RAR).map(k => ({ l: RAR[k][0], c: RAR[k][1], on: () => this.setState(st => ({ draft: { ...st.draft, rarity: k } })),
+        bg: d.rarity === k ? RAR[k][1] : 'transparent', fg: d.rarity === k ? onRar : RAR[k][1] })),
+      startDraftScan: () => { if (!s.scanning) { this.setState({ scanning: 'add', scanPct: 0 }); this.snd('tap'); } },
+      draftScanIdle: s.scanning !== 'add' && !d.scanned, draftScanning: s.scanning === 'add', draftScanned: d.scanned && s.scanning !== 'add',
+      saveAdd: () => this.saveAdd(false),
+      // --- bindings referenced by the template but missing from the handoff script ---
+      isWide: s.vw >= 720, isNarrow: s.vw < 720,
+      stageH: s.vw < 720 ? '300px' : '360px',
+      toastBottom: s.vw < 720 ? 'calc(84px + env(safe-area-inset-bottom))' : '28px',
+      addInstant: s.addMode === 'instant', addFull: s.addMode === 'full',
+      addTitle: s.addMode === 'instant' ? 'Add loot in ten seconds' : ['Capture it', 'Tell its story', 'Mint the tag'][s.addStep] || 'Add loot',
+      addModes: [['Instant', 'instant'], ['Full tag', 'full']].map(([l, m]) => ({ l, on: () => this.setState({ addMode: m, addStep: 0 }), bg: s.addMode === m ? INK : 'transparent', fg: s.addMode === m ? BG : 'var(--sub,#c9c8d0)' })),
+      setPlace: setD('place'),
+      useLocation: () => {
+        if (!navigator.geolocation) { this.setState(st => ({ draft: { ...st.draft, locStatus: 'denied' } })); return; }
+        this.setState(st => ({ draft: { ...st.draft, locStatus: 'locating' } })); this.snd('tap');
+        navigator.geolocation.getCurrentPosition(
+          p => { this.setState(st => ({ draft: { ...st.draft, locStatus: 'pinned', ll: [p.coords.latitude, p.coords.longitude], acc: p.coords.accuracy || 0 } })); this.snd('scan'); },
+          () => this.setState(st => ({ draft: { ...st.draft, locStatus: 'denied' } })),
+          { enableHighAccuracy: true, timeout: 8000 });
+      },
+      draftLocText: d.locStatus === 'pinned' && d.ll ? `PINNED · ${d.ll[0].toFixed(4)}, ${d.ll[1].toFixed(4)} · ±${Math.max(1, Math.round(d.acc || 0))} M`
+        : d.locStatus === 'locating' ? 'LOCATING…' : d.locStatus === 'denied' ? 'LOCATION OFF · TYPE A PLACE INSTEAD' : 'OPTIONAL · WHERE IT LIVES OR WAS LAST SEEN',
+      draftLocColor: d.locStatus === 'pinned' ? 'var(--limeInk,oklch(0.89 0.19 125))' : 'var(--ink5,#77768a)',
+      saveInstant: () => this.saveAdd(true),
+
+      coffeeCount: s.coffees, coffeeLabel: s.coffeeWhen,
+      coffeeLatest: (() => { const c = s.events.find(e => e.t === 'coffee'); return c ? `${c.who} · ${c.place}` : 'nobody yet'; })(),
+      coffeeSrc: 'coffee-cup.html?bg=' + (light ? 'f0efe9' : '16161b'),
+      coffeeOpts: ['Today', 'Tomorrow', 'This week'].map(w => ({ l: w, on: () => this.setState({ coffeeWhen: w }), ...chip(s.coffeeWhen === w) })),
+      coffeeOptsPhone: ['Today', 'Tomorrow', 'This week'].map(w => ({ l: w, on: () => this.setState({ coffeeWhen: w }), bg: s.coffeeWhen === w ? '#f3f1ea' : 'transparent', fg: s.coffeeWhen === w ? '#121214' : '#f3f1ea', bd: s.coffeeWhen === w ? '#f3f1ea' : '#3a3a44' })),
+      sendCoffee: () => {
+        const when = s.coffeeWhen;
+        this.setState(st => ({ events: [{ t: 'coffee', item: fr.id, who: 'A finder', place: when, ago: 'Just now', text: `I have ${fr.nickname} — coffee ${when.toLowerCase()}?` }, ...st.events] }));
+        this.flash('Sent to Kai', `Coffee ${when.toLowerCase()} · Kai will confirm a place`); this.snd('claim');
+      },
+      hasToast: !!s.toast, toast: s.toast || {}
+    };
+  }
+}
+</script>
+</body>
+</html>

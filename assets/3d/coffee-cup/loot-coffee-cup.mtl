@@ -1,0 +1,31 @@
+# Exported by three-d-stage
+newmtl ceramic
+Kd 0.8796 0.8632 0.7913
+Ks 0.2000 0.2000 0.2000
+Ns 136
+d 1.0000
+
+newmtl lime-glaze
+Kd 0.5841 0.8963 0.0497
+Ks 0.2000 0.2000 0.2000
+Ns 144
+d 1.0000
+
+newmtl coffee
+Kd 0.0242 0.0103 0.0060
+Ks 0.2000 0.2000 0.2000
+Ns 176
+d 1.0000
+
+newmtl crema
+Kd 0.4851 0.2542 0.1022
+Ks 0.2000 0.2000 0.2000
+Ns 100
+d 1.0000
+
+newmtl steel
+Kd 0.6514 0.6724 0.7011
+Ks 0.2000 0.2000 0.2000
+Ns 140
+d 1.0000
+

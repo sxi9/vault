@@ -1,0 +1,37 @@
+# Exported by three-d-stage
+newmtl rubber
+Kd 0.0232 0.0232 0.0273
+Ks 0.2000 0.2000 0.2000
+Ns 20
+d 1.0000
+
+newmtl alloy
+Kd 0.6240 0.6514 0.6867
+Ks 0.2000 0.2000 0.2000
+Ns 130
+d 1.0000
+
+newmtl frame-paint
+Kd 0.5841 0.8963 0.0497
+Ks 0.2000 0.2000 0.2000
+Ns 130
+d 1.0000
+
+newmtl dark-steel
+Kd 0.0908 0.0976 0.1119
+Ks 0.2000 0.2000 0.2000
+Ns 110
+d 1.0000
+
+newmtl matte-black
+Kd 0.0116 0.0116 0.0144
+Ks 0.2000 0.2000 0.2000
+Ns 60
+d 1.0000
+
+newmtl sticker
+Kd 0.8963 0.8796 0.8228
+Ks 0.2000 0.2000 0.2000
+Ns 80
+d 1.0000
+

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LOOT · Comet (road bike) · 3D example</title>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.184.0/build/three.module.js",
+    "three/addons/controls/OrbitControls.js": "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js",
+    "three/addons/exporters/OBJExporter.js": "https://unpkg.com/three@0.184.0/examples/jsm/exporters/OBJExporter.js",
+    "three/addons/exporters/GLTFExporter.js": "https://unpkg.com/three@0.184.0/examples/jsm/exporters/GLTFExporter.js"
+  },
+  "integrity": {
+    "https://unpkg.com/three@0.184.0/build/three.module.js": "sha384-8FCZ1eVO6it4+pbec2aDtnTrwjWXZLJRC+MAGCIPDgsYnUrl/E0A2YlF8ioMKI/J",
+    "https://unpkg.com/three@0.184.0/build/three.core.js": "sha384-dw2ooPewaEIrAgl6oFDBmmBWCE9oW9LxRGcfwZ0hLvEprzo202wXl7vCYHRlSnOT",
+    "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js": "sha384-4rziNxOBZKQ69i+w+f89KJ55TCYquwchVbByQwmaOeIOXdOU2PLDn3kOfXHwIJC9",
+    "https://unpkg.com/three@0.184.0/examples/jsm/exporters/OBJExporter.js": "sha384-nbwtoZENJD3Vq+ACK0CuGQdPMuDWHkamC2KJD70EV5nfg6jQjfppKOea07YJN+N3",
+    "https://unpkg.com/three@0.184.0/examples/jsm/exporters/GLTFExporter.js": "sha384-VofkvpG6HERhFCYbsUOHeNXBCqID2nfqkQqnVzE1jc/oPcz+qJ13ADdXH08hE+cQ"
+  }
+}
+</script>
+<style>
+html,body{margin:0;height:100%;background:#16161b}
+three-d-stage{display:block;width:100vw;height:100vh}
+three-d-stage:not(:defined){visibility:hidden}
+</style>
+</head>
+<body>
+<three-d-stage name="loot-bike-comet" background="#16161b" autorotate></three-d-stage>
+<script src="three-d-stage.js"></script>
+<script type="module">
+// Example item model: "Comet" (BK-002), a road bike built from primitives.
+// Real-world metres, y-up, resting on the ground. Placeholder for the
+// photogrammetry model the "Scan in 3D" flow will eventually produce.
+const stage = document.querySelector('three-d-stage');
+const bg = new URLSearchParams(location.search).get('bg');
+if (bg && /^[0-9a-f]{6}$/i.test(bg)) { stage.setAttribute('background', '#' + bg); document.body.style.background = '#' + bg; }
+const { THREE } = await stage.ready;
+
+const mat = (name, color, roughness, metalness) => { const m = new THREE.MeshStandardMaterial({ color, roughness, metalness }); m.name = name; return m; };
+const paint  = mat('frame-paint', 0xc9f33f, 0.35, 0.15);   // LOOT lime frame
+const black  = mat('matte-black', 0x1c1c20, 0.7, 0.05);     // tyres, saddle, bar tape
+const alloy  = mat('alloy', 0xcfd3d8, 0.35, 0.35);          // rims, cranks, stem, posts
+const steel  = mat('dark-steel', 0x55585e, 0.45, 0.35);     // chain, cassette, chainring
+const rubber = mat('rubber', 0x2a2a2e, 0.9, 0.0);
+
+const add = (parent, name, geo, m, pos = [0, 0, 0]) => { const mesh = new THREE.Mesh(geo, m); mesh.name = name; mesh.position.set(...pos); parent.add(mesh); return mesh; };
+const V = (x, y, z) => new THREE.Vector3(x, y, z);
+// A tube between two points — the frame is nothing but these.
+const tube = (parent, name, a, b, r, m, segs = 24) => {
+  const dir = b.clone().sub(a); const len = dir.length();
+  const geo = new THREE.CylinderGeometry(r, r, len, segs, 1, false);
+  const mesh = new THREE.Mesh(geo, m); mesh.name = name;
+  mesh.position.copy(a).add(dir.clone().multiplyScalar(0.5));
+  mesh.quaternion.setFromUnitVectors(V(0, 1, 0), dir.normalize());
+  parent.add(mesh); return mesh;
+};
+
+const model = new THREE.Group(); model.name = 'bike-comet';
+
+// ---- geometry (700c road bike, 56 cm frame) ----
+const R = 0.34;                       // wheel radius incl. tyre (≈ 680 mm dia)
+const wheelbase = 0.99;
+const rear = V(-wheelbase / 2, R, 0), front = V(wheelbase / 2, R, 0);
+const bb = V(-0.08, R - 0.07, 0);     // bottom bracket (70 mm drop)
+const seatTop = V(-0.26, 0.86, 0);    // top of seat tube
+const headTop = V(0.30, 0.82, 0);
+const headBot = V(0.36, 0.60, 0);
+
+// ---- wheels ----
+const wheel = (name, at) => {
+  const g = new THREE.Group(); g.name = name; g.position.copy(at); model.add(g);
+  add(g, name + '-tyre', new THREE.TorusGeometry(R - 0.014, 0.014, 16, 72), rubber);
+  add(g, name + '-rim', new THREE.TorusGeometry(R - 0.032, 0.012, 12, 72), alloy);
+  add(g, name + '-hub', new THREE.CylinderGeometry(0.016, 0.016, 0.1, 24), alloy).rotation.x = Math.PI / 2;
+  for (let i = 0; i < 24; i++) {
+    const a = (i / 24) * Math.PI * 2; const side = i % 2 ? 0.03 : -0.03;
+    tube(g, name + '-spoke-' + i, V(0, 0, side), V(Math.cos(a) * (R - 0.032), Math.sin(a) * (R - 0.032), 0), 0.0012, alloy, 6);
+  }
+  return g;
+};
+wheel('rear-wheel', rear); wheel('front-wheel', front);
+
+// ---- frame ----
+tube(model, 'down-tube', headBot, bb, 0.019, paint);
+tube(model, 'top-tube', headTop, seatTop, 0.015, paint);
+tube(model, 'seat-tube', bb, seatTop.clone().add(V(0, 0.02, 0)), 0.015, paint);
+tube(model, 'head-tube', headBot.clone().add(V(0, -0.02, 0)), headTop.clone().add(V(0, 0.03, 0)), 0.02, paint);
+[-0.045, 0.045].forEach((z, i) => {
+  tube(model, 'chainstay-' + i, bb.clone().add(V(0, 0, z)), rear.clone().add(V(0, 0, z * 1.5)), 0.009, paint);
+  tube(model, 'seatstay-' + i, seatTop.clone().add(V(0, -0.02, z * 0.6)), rear.clone().add(V(0, 0, z * 1.5)), 0.008, paint);
+  tube(model, 'fork-blade-' + i, headBot.clone().add(V(0.01, -0.03, z * 0.7)), front.clone().add(V(0, 0, z * 1.5)), 0.009, paint);
+});
+add(model, 'bb-shell', new THREE.CylinderGeometry(0.022, 0.022, 0.068, 24), paint, bb.toArray()).rotation.x = Math.PI / 2;
+
+// ---- drivetrain ----
+add(model, 'chainring', new THREE.TorusGeometry(0.105, 0.004, 8, 64), steel, [bb.x, bb.y, 0.05]);
+add(model, 'cassette', new THREE.CylinderGeometry(0.05, 0.03, 0.03, 32), steel, [rear.x, rear.y, 0.05]).rotation.x = Math.PI / 2;
+tube(model, 'chain-top', V(bb.x, bb.y + 0.105, 0.05), V(rear.x, rear.y + 0.05, 0.05), 0.004, steel, 8);
+tube(model, 'chain-bottom', V(bb.x, bb.y - 0.105, 0.05), V(rear.x, rear.y - 0.05, 0.05), 0.004, steel, 8);
+[-1, 1].forEach((s, i) => {
+  const z = s * 0.075;
+  const crank = tube(model, 'crank-' + i, V(bb.x, bb.y, z), V(bb.x + s * 0.12, bb.y - s * 0.12, z), 0.009, alloy);
+  add(model, 'pedal-' + i, new THREE.BoxGeometry(0.09, 0.015, 0.06), black, [bb.x + s * 0.12, bb.y - s * 0.12, z + s * 0.045]);
+});
+
+// ---- cockpit ----
+tube(model, 'seatpost', seatTop, seatTop.clone().add(V(-0.04, 0.12, 0)), 0.012, alloy);
+const saddle = add(model, 'saddle', new THREE.BoxGeometry(0.26, 0.035, 0.13), black, [seatTop.x - 0.06, seatTop.y + 0.14, 0]);
+saddle.scale.set(1, 1, 1); saddle.geometry.translate(0, 0, 0);
+tube(model, 'steerer', headTop, headTop.clone().add(V(-0.01, 0.05, 0)), 0.013, alloy);
+tube(model, 'stem', headTop.clone().add(V(-0.01, 0.05, 0)), headTop.clone().add(V(0.09, 0.07, 0)), 0.013, alloy);
+const barC = headTop.clone().add(V(0.09, 0.07, 0));
+tube(model, 'handlebar-top', barC.clone().add(V(0, 0, -0.21)), barC.clone().add(V(0, 0, 0.21)), 0.012, black);
+[-0.21, 0.21].forEach((z, i) => {
+  const drop = add(model, 'drop-' + i, new THREE.TorusGeometry(0.065, 0.012, 12, 32, Math.PI), black, [barC.x + 0.02, barC.y - 0.065, z]);
+  drop.rotation.y = Math.PI / 2; drop.rotation.z = 0; drop.rotation.x = 0;
+});
+
+// ---- tiny QR sticker on the down tube (where the LOOT tag goes) ----
+const sticker = add(model, 'qr-sticker', new THREE.BoxGeometry(0.05, 0.07, 0.002), mat('sticker', 0xf3f1ea, 0.6, 0), [0.14, 0.46, 0.021]);
+sticker.lookAt(V(0.14 + 0.2, 0.46 + 0.42, 1));
+
+model.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+stage.setObject(model);
+</script>
+</body>
+</html>
