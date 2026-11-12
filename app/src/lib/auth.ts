@@ -33,9 +33,11 @@ export function verifySessionToken(token: string | undefined | null): boolean {
 export function checkPassword(given: string): boolean {
   const want = process.env.OWNER_PASSWORD;
   if (!want) return process.env.NODE_ENV !== "production"; // dev: no password set → open
-  const a = Buffer.from(given);
-  const b = Buffer.from(want);
-  return a.length === b.length && crypto.timingSafeEqual(a, b);
+  // Compare fixed-length digests so neither the length nor the content of the
+  // password shows up as a timing difference.
+  const a = crypto.createHash("sha256").update(given).digest();
+  const b = crypto.createHash("sha256").update(want).digest();
+  return crypto.timingSafeEqual(a, b);
 }
 
 /** True when the request carries a valid owner session (or no password is configured in dev). */

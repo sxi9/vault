@@ -47,6 +47,8 @@
   --sub: #3b3a44;
   --track: #cfcdc3;
   --limeInk: oklch(0.52 0.16 125);
+  /* darker red so danger text and white-on-danger fills pass AA on light surfaces */
+  --danger: oklch(0.5 0.2 25);
 }
 
 @theme inline {
@@ -68,6 +70,7 @@
   --color-limeInk: var(--limeInk);
   --color-on-lime: var(--on-lime);
   --color-danger: var(--danger);
+  --color-track: var(--track);
   --color-paper: var(--paper);
   --color-paper2: var(--paper2);
   --color-paper-line: var(--paper-line);
@@ -90,115 +93,126 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-a {
-  color: var(--limeInk);
-  text-decoration: none;
-}
-a:hover {
-  text-decoration: underline;
+@layer base {
+  a {
+    color: var(--limeInk);
+    text-decoration: none;
+  }
+  a:hover {
+    text-decoration: underline;
+  }
 }
 
-button,
-input,
-select,
-textarea {
-  font: inherit;
-  color: inherit;
+/* In @layer base so Tailwind utilities (text-lime, text-ink3, ...) can still
+   colour a button or input; an unlayered rule would outrank them. */
+@layer base {
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+    color: inherit;
+  }
 }
 input::placeholder,
 textarea::placeholder {
   color: var(--ink5);
 }
 
-/* Shared primitives. Keep these few; compose with Tailwind utilities. */
-.label {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ink3);
-}
-.card {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-card);
-  padding: 24px;
-}
-.tile {
-  background: var(--panel2);
-  border-radius: var(--radius-tile);
-  padding: 14px 16px;
-}
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  height: 40px;
-  padding: 0 16px;
-  border-radius: 999px;
-  border: 1px solid var(--line3);
-  background: transparent;
-  color: var(--ink);
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.btn:hover {
-  border-color: var(--ink3);
-  text-decoration: none;
-}
-.btn-primary {
-  height: 44px;
-  padding: 0 20px;
-  border: none;
-  background: var(--lime);
-  color: var(--on-lime);
-  font-weight: 700;
-}
-.btn-primary:hover {
-  background: var(--lime-hover);
-}
-.btn-danger {
-  border-color: var(--danger);
-  color: var(--danger);
-}
-.btn:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-.input {
-  height: 44px;
-  padding: 0 14px;
-  border-radius: 12px;
-  border: 1px solid var(--line);
-  background: var(--bg);
-  color: var(--ink);
-  width: 100%;
-}
-textarea.input {
-  height: auto;
-  padding: 12px 14px;
-  min-height: 96px;
-}
-.input:focus-visible,
-.btn:focus-visible,
-a:focus-visible {
-  outline: 2px solid var(--lime);
-  outline-offset: 2px;
-}
-.pill {
-  display: inline-flex;
-  align-items: center;
-  height: 24px;
-  padding: 0 10px;
-  border-radius: 999px;
-  border: 1px solid var(--line3);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+/* Shared primitives. Keep these few; compose with Tailwind utilities.
+   They live in @layer components so that utilities (which Tailwind emits in
+   @layer utilities, declared after components) win on the same property:
+   `card border-danger`, `btn h-9 px-3`, `pill border-transparent` etc. */
+@layer components {
+  .label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink3);
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    padding: 24px;
+  }
+  .tile {
+    background: var(--panel2);
+    border-radius: var(--radius-tile);
+    padding: 14px 16px;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 16px;
+    border-radius: 999px;
+    border: 1px solid var(--line3);
+    background: transparent;
+    color: var(--ink);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .btn:hover {
+    border-color: var(--ink3);
+    text-decoration: none;
+  }
+  .btn-primary {
+    height: 44px;
+    padding: 0 20px;
+    border: none;
+    background: var(--lime);
+    color: var(--on-lime);
+    font-weight: 700;
+  }
+  .btn-primary:hover {
+    background: var(--lime-hover);
+  }
+  .btn-danger {
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+  .input {
+    height: 44px;
+    padding: 0 14px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--ink);
+    width: 100%;
+  }
+  textarea.input {
+    height: auto;
+    padding: 12px 14px;
+    min-height: 96px;
+  }
+  .input:focus-visible,
+  .btn:focus-visible,
+  a:focus-visible {
+    outline: 2px solid var(--lime);
+    outline-offset: 2px;
+  }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid var(--line3);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -226,6 +240,11 @@ a:focus-visible {
     box-shadow: none;
     padding: 0;
     border-radius: 0;
+  }
+  #print-sheet,
+  #print-sheet * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
   @page {
     margin: 10mm;

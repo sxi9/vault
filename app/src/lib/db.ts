@@ -288,7 +288,7 @@ function seedIfEmpty(d: Database.Database) {
       `INSERT INTO owner (id, handle, name, bio, contact, links, reward_line) VALUES (1, ?, ?, ?, ?, ?, ?)`,
     ).run(
       process.env.OWNER_HANDLE || "me",
-      process.env.OWNER_NAME || "Your name",
+      process.env.OWNER_NAME || "Kai Moreno",
       "Rides far, tags everything. If you found something of mine, thank you.",
       process.env.OWNER_CONTACT || "Set your contact in Settings",
       "[]",

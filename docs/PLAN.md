@@ -71,7 +71,7 @@ Event  { id, itemId, type: scan|message|location|lost|found|lend|return|created|
 | Phase | Scope | Status |
 |---|---|---|
 | 0 | Design handoff, 3D exports, analysis, walkthrough | done |
-| 1 | Scaffold, tag page, inventory, item page, activity + map, stickers, 3D upload, auth | this commit |
+| 1 | Scaffold, tag page, inventory, item page, activity + map, stickers, 3D upload, auth | done, verified in a browser |
 | 2 | Host it: a VPS or Fly.io with a persistent volume, `BASE_URL` set to the real domain, HTTPS, backups of `data/` | next |
 | 3 | Notifications: email or push when a finder messages or pins a location | next |
 | 4 | Object storage for uploads, image resizing, Postgres if more than one owner | later |
