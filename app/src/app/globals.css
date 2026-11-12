@@ -1,0 +1,233 @@
+@import "tailwindcss";
+
+/* LOOT design tokens (from prototype/HANDOFF.md). Dark is the default. */
+:root {
+  --bg: #0e0e11;
+  --bgA: rgba(14, 14, 17, 0.84);
+  --panel: #16161b;
+  --panel2: #1d1d23;
+  --deep: #121216;
+  --line: #2a2a32;
+  --line2: #24242b;
+  --line3: #34343d;
+  --ink: #f1f0ea;
+  --ink2: #b9b8c2;
+  --ink3: #9b9aa5;
+  --ink4: #8d8c97;
+  --ink5: #77768a;
+  --sub: #c9c8d0;
+  --track: #2e2e36;
+  --lime: oklch(0.89 0.19 125);
+  --lime-hover: #e4ff8a;
+  --limeInk: oklch(0.89 0.19 125);
+  --on-lime: #0e0e11;
+  --danger: oklch(0.64 0.21 25);
+  /* paper surfaces (stickers, tag page) stay light in both themes */
+  --paper: #f3f1ea;
+  --paper2: #e5e2d8;
+  --paper-line: #e2dfd5;
+  --paper-ink: #121214;
+  --paper-muted: #5d5c66;
+}
+
+:root[data-theme="light"] {
+  --bg: #f4f3ee;
+  --bgA: rgba(244, 243, 238, 0.86);
+  --panel: #ffffff;
+  --panel2: #efeee8;
+  --deep: #faf9f5;
+  --line: #e2e0d7;
+  --line2: #e9e7df;
+  --line3: #cfcdc3;
+  --ink: #121214;
+  --ink2: #4a4954;
+  --ink3: #5d5c66;
+  --ink4: #66656f;
+  --ink5: #7b7a85;
+  --sub: #3b3a44;
+  --track: #cfcdc3;
+  --limeInk: oklch(0.52 0.16 125);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-panel: var(--panel);
+  --color-panel2: var(--panel2);
+  --color-deep: var(--deep);
+  --color-line: var(--line);
+  --color-line2: var(--line2);
+  --color-line3: var(--line3);
+  --color-ink: var(--ink);
+  --color-ink2: var(--ink2);
+  --color-ink3: var(--ink3);
+  --color-ink4: var(--ink4);
+  --color-ink5: var(--ink5);
+  --color-sub: var(--sub);
+  --color-lime: var(--lime);
+  --color-lime-hover: var(--lime-hover);
+  --color-limeInk: var(--limeInk);
+  --color-on-lime: var(--on-lime);
+  --color-danger: var(--danger);
+  --color-paper: var(--paper);
+  --color-paper2: var(--paper2);
+  --color-paper-line: var(--paper-line);
+  --color-paper-ink: var(--paper-ink);
+  --color-paper-muted: var(--paper-muted);
+  --font-display: var(--font-unbounded), sans-serif;
+  --font-sans: var(--font-dm-sans), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), monospace;
+  --radius-card: 28px;
+  --radius-tile: 16px;
+  --radius-item: 22px;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--limeInk);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--ink5);
+}
+
+/* Shared primitives. Keep these few; compose with Tailwind utilities. */
+.label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink3);
+}
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: 24px;
+}
+.tile {
+  background: var(--panel2);
+  border-radius: var(--radius-tile);
+  padding: 14px 16px;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--line3);
+  background: transparent;
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn:hover {
+  border-color: var(--ink3);
+  text-decoration: none;
+}
+.btn-primary {
+  height: 44px;
+  padding: 0 20px;
+  border: none;
+  background: var(--lime);
+  color: var(--on-lime);
+  font-weight: 700;
+}
+.btn-primary:hover {
+  background: var(--lime-hover);
+}
+.btn-danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.input {
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--ink);
+  width: 100%;
+}
+textarea.input {
+  height: auto;
+  padding: 12px 14px;
+  min-height: 96px;
+}
+.input:focus-visible,
+.btn:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--lime);
+  outline-offset: 2px;
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line3);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #print-sheet,
+  #print-sheet * {
+    visibility: visible;
+  }
+  #print-sheet {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    box-shadow: none;
+    padding: 0;
+    border-radius: 0;
+  }
+  @page {
+    margin: 10mm;
+  }
+}
